@@ -2,8 +2,8 @@ import socket
 import threading
 import sys 
 import os
-
-from server.server_helper import switch_server_cmd, switch_client_request
+import time
+from server_helper import parse_server_cmd, parse_client_request
 
 class Server:
     def __init__(
@@ -36,9 +36,7 @@ class Server:
                 client, address = self.server.accept()
                 print('Client %s:%s connected.' % (address[0], address[1]))
                 
-                if client and address:
-                    self.client_socket_lists[address] = client
-                    self.set_client_name('client1', client)
+                self.client_socket_lists[address] = client
 
                 # Create thread to handle client request
                 client_handler = threading.Thread(
@@ -55,10 +53,13 @@ class Server:
     def cli(self):
         while True:
             try:
-                command = input('>')
-
-                method, payload = switch_server_cmd(command)
-                print(method, payload)
+                command = input('> ')
+                
+                if command == '':
+                    continue
+                
+                method, payload = parse_server_cmd(command)
+                
                 if(hasattr(self, method) and callable(getattr(self, method))):
                     getattr(self, method)(payload)
                 
@@ -68,10 +69,13 @@ class Server:
             except BaseException:
                 self.shutdown()
     
-    def set_client_name (self, client_name, client):
-        print(f'Setting client name to {client_name}...')
+    def set_client_name (self, payload):
+        client_name, address = payload
+        
+        print(f'Setting client {address}\'s name to {client_name}...\n>')
+        
         self.lock.acquire()
-        self.client_name_lists[client_name] = client
+        self.client_name_lists[client_name] = address
         self.lock.release()
         
     def handle_client_connection(self, client_socket: socket.socket, address):
@@ -80,53 +84,95 @@ class Server:
                 request = client_socket.recv(1024).decode()
                 
                 if(request == ''):
-                    raise AttributeError('Empty request.')
+                    raise AttributeError
                 
-                method, payload = switch_client_request(request, address)
+                method, payload = parse_client_request(request, address)
                 
                 if(hasattr(self, method) and callable(getattr(self, method))):
                     getattr(self, method)(payload)
 
             except ConnectionError:
-                print(f"Client {address} disconnected.")
+                print(f"Client {address} disconnected.\n>")
                 break
             except Exception as e:
-                ping_sucessful = self.test_connection(client_socket, address)
+                tests = 3
+                shoud_break = False
                 
-                if( not ping_sucessful ):
-                    self.remove_client(address)
-                    client_socket.close()
-                    
-                    print(f"Client {address} disconnected.")
-                break
+                if not self.client_socket_exists(address):
+                    shoud_break = True
 
+                while tests and not shoud_break:
+                    ping_sucessful = self.test_connection(client_socket, address)
+                    
+                    if not ping_sucessful:
+                        self.remove_client(address)
+                        client_socket.close()
+                        
+                        print(f"Client {address} disconnected.\n>")
+                        shoud_break = True
+                        
+                    time.sleep(0.5)
+                    tests -= 1
+                    
+                if(shoud_break):
+                    print(e)
+                    break
+    
+    def client_name_exists(self, client_name):
+        if self.client_name_lists.keys().__contains__(client_name):
+            return True
+        
+    def client_socket_exists(self, address):
+        if self.client_socket_lists.keys().__contains__(address):
+            return True
+        
+        
     def remove_client(self, address):
+        if not self.client_socket_exists(address):
+            return
+        
         self.lock.acquire()
+        
         del self.client_socket_lists[address]
+        self.remove_client_name(address)
+        
         self.lock.release()
+        
+    def remove_client_name(self, address):
+        for client_name, client_address in self.client_name_lists.items():
+            if client_address != address:
+                continue
+            
+            if self.client_name_exists(client_name):
+                del self.client_name_lists[client_name]
+                break
     
     def test_connection(self, client_socket: socket.socket, address):
         ping_sucessful = True
         
+        client_is_removed = not client_socket or not self.client_socket_lists.keys().__contains__(address)
+        
+        if(client_is_removed):
+            return False
+        
         try:
-            client_socket.sendall('PING'.encode())
+            client_socket.sendall('Test connection'.encode())
         except ConnectionError:
             ping_sucessful = False
 
         return ping_sucessful
     
     def ping_client(self, client_name):
-        client_socket = self.client_name_lists[client_name]
-        print(f'Pinging {client_name}...')
-        
+        client_address = self.client_name_lists[client_name]
+                
         try:
-            client_socket.sendall('PINGS'.encode())
+            client = self.client_socket_lists[client_address]
+            client.sendall('Server has pinged you !'.encode())
         except ConnectionError as e:
-            print(f'Client {client_name} is not available.')
+            print(f'Client {client_name} is not available.\n>')
             
-    def shutdown(self):
+    def shutdown(self, payload=None):
         print('\nShutting Down...')
-        self.server.close()
         
         try:
             sys.exit(0)
