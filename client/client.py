@@ -1,17 +1,12 @@
 import socket
 import threading
-import platform
-import mimetypes
 import os
 import sys
-import time
 from pathlib import Path
 
 
 class MyException(Exception):
     pass
-
-
 class Client(object):
     def __init__(
         self, 
@@ -32,22 +27,39 @@ class Client(object):
         try:
             self.server.connect((self.server_host, self.server_port))
         except Exception as e:
-            print(e)
-            sys.exit(1)
-        
-        self.send()
-        
-        res = self.server.recv(1024)
-        while res:
-            print(res.decode())
-            res = self.server.recv(1024)
+            print('Server is not available.')
             
-    def send(self):
-        print('Sent msg from client to server')
+        cli_thread = threading.Thread(target=self.cli)
+        cli_thread.start()
         
-        self.server.send('Hello from client'.encode())
+        self.server.send('set_client_name client1'.encode('utf-8')) # Temporary set client name
+        
+        while True:
+            try:
+                data = self.server.recv(1024)
+                if data:
+                    print(data.decode('utf-8'))
+            except Exception as e:
+                print(e)
+                break
+            except KeyboardInterrupt:
+                print('Client is shutting down...')
+                self.shutdown()
+                break
+            
+        
+            
+    def cli(self):
+        pass
+                
+    def shutdown(self):
+        print('\nShutting Down...')
+        self.server.close()
+        try:
+            sys.exit(0)
+        except SystemExit:
+            os._exit(0)
 
-        
 if __name__ == '__main__':
     client = Client()
     
