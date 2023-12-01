@@ -195,10 +195,18 @@ class Server:
         
         file_name, file_path, client_address, = payload
         
+        # Work around: file_path will be destructured from self.file_references[file_name]. So we need a cloned variable
+        path = file_path
+        
         if not self.file_references.keys().__contains__(file_name):
             self.file_references[file_name] = []
             
-        self.file_references[file_name].append((client_address, file_path))
+        for client_address, file_path in self.file_references[file_name]:
+            if path == file_path:
+                print(f'File {file_name} at {path} directory has already been recorded.\n')
+                return
+        
+        self.file_references[file_name].append((client_address, path))
         
         self.lock.release()
         
@@ -216,14 +224,11 @@ class Server:
                         'file_name': file_name,
                         'file_path': file_path
                     })
-                    break
                 
         print(f'Files from host {hostname}:')
         
         for file_information in files_information:
             print(f'File name: {file_information["file_name"]}, file path: {file_information["file_path"]}')
-    
-    
         
 if __name__ == '__main__':
     server = Server()
