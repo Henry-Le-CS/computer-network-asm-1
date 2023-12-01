@@ -193,7 +193,9 @@ class Server:
     def add_file_reference(self, payload):
         self.lock.acquire()
         
-        file_name, file_path, client_address, = payload
+        file_name, file_path, client_address = payload
+        
+        addr = client_address
         
         # Work around: file_path will be destructured from self.file_references[file_name]. So we need a cloned variable
         path = file_path
@@ -202,24 +204,24 @@ class Server:
             self.file_references[file_name] = []
             
         for client_address, file_path in self.file_references[file_name]:
-            if path == file_path:
+            if path == file_path and client_address == addr:
                 print(f'File {file_name} at {path} directory has already been recorded.\n')
                 return
         
-        self.file_references[file_name].append((client_address, path))
+        self.file_references[file_name].append((addr, path))
         
         self.lock.release()
         
     def discover_client (self, hostname):
         files_information = []
         
-        client_address = self.client_name_lists[hostname]
+        address = self.client_name_lists[hostname]
         
         for file_name, file_references in self.file_references.items():
             # Check for all file references whose address is the same as client_address
             for client_address, file_path in file_references:
                 # Check host and port
-                if client_address == client_address:
+                if client_address == address:
                     files_information.append({
                         'file_name': file_name,
                         'file_path': file_path
@@ -229,8 +231,34 @@ class Server:
         
         for file_information in files_information:
             print(f'File name: {file_information["file_name"]}, file path: {file_information["file_path"]}')
+ 
+    def get_client_name(self, address):
+        for client_name, client_address in self.client_name_lists.items():
+            if client_address == address:
+                return client_name
+            
+    def fetch_peers (self, payload):
+        
+        file_name, address = payload
+        
+        client = self.client_socket_lists[address]
+        
+        if(not self.file_references.keys().__contains__(file_name)):
+            client.sendall(f'File {file_name} not found'.encode())
+            return
+        
+        res = ['PEERS']
+        res.append(file_name)
+        
+        for client_address, file_path in self.file_references[file_name]:
+            client_name = self.get_client_name(client_address)
+            res.append(f'{client_name} {client_address[0]} {client_address[1]} {file_path}')       
+        
+        message = '\n'.join(res)
+        
+        client.sendall(message.encode())
         
 if __name__ == '__main__':
-    server = Server()
+    server = Server(server_host='192.168.0.163')
 
     server.start()

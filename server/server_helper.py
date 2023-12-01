@@ -76,7 +76,14 @@ def parse_client_request (request: str, address):
         
         payload = (file_name, file_path, address)
         method = 'add_file_reference'
+    
+    elif request_method == 'FETCH_FILE_INFO':
+        validate_length(request, 2, delimiter=delimiter) # keyword, file_name
         
+        file_name = splitted_command[1]
+        
+        payload = (file_name, address)
+        method = 'fetch_peers'
     else:
         raise MyException('Invalid request.')
 

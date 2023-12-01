@@ -4,9 +4,10 @@ import os
 import sys
 import argparse
 
-from client_helper import parse_client_cmd, MyException
+from client_helper import parse_client_cmd, parse_server_response
 from pathlib import Path
-class Client(object):
+
+class Client():
     def __init__(
         self, 
         hostname,
@@ -46,7 +47,14 @@ class Client(object):
             try:
                 data = self.server.recv(1024)
                 if data:
-                    print(data.decode('utf-8'))
+                    data = data.decode()
+                    
+                    method, payload = parse_server_response(data)
+                    if(method == 'PRINT'):
+                        print(data)
+                    elif(hasattr(self, method) and callable(getattr(self, method))):
+                        getattr(self, method)(payload)
+                    
             except Exception as e:
                 print(e)
                 break
@@ -63,8 +71,7 @@ class Client(object):
         except Exception as e:
             print(e)
             self.shutdown()
-        
-            
+                  
     def cli(self):
         while True:
             try:
@@ -111,7 +118,17 @@ class Client(object):
     def check_file_exist (self, file_path, file_name):
         path = file_path + '/' + file_name
         return Path(path).exists()
+    
+    def fetch_file_info(self, payload):
+        file_name = payload
+        
+        message = 'FETCH_FILE_INFO\n' + file_name
+        self.server.send(message.encode())
 
+    def select_peer(self, payload):
+        file_name, options = payload
+        
+        print(options)
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     
@@ -119,6 +136,6 @@ if __name__ == '__main__':
     
     args = parser.parse_args()
     
-    client = Client(hostname=args.hostname)
+    client = Client(hostname=args.hostname, server_host='192.168.0.163')
     
     client.start()
