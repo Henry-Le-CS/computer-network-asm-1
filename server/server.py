@@ -1,66 +1,94 @@
 import socket
 import threading
+import sys 
+import os
 class Server:
     def __init__(
             self, 
-            server_host = "",
-            server_port = 7734,
-            upload_port = None,
-        ) -> None:
-        
+            server_host="",
+            server_port=7734,
+            upload_port=None,
+    ) -> None:
         self.server_host = server_host
         self.server_port = server_port
         self.upload_port = upload_port
-    
+
+        self.client_lists = {}  # {address: client}
+        self.lock = threading.Lock()
     def start(self):
         print('Starting the server on %s:%s' % (self.server_host, self.server_port))
-        
+
         self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server.bind((self.server_host, self.server_port))
         self.server.listen(5)
-        
+
         while True:
             try:
                 client, address = self.server.accept()
                 print('Client %s:%s connected.' % (address[0], address[1]))
+
+                self.client_lists[address] = client
 
                 # Create thread to handle client request
                 client_handler = threading.Thread(
                     target=self.handle_client_connection,
                     args=(client, address)
                 )
-                
+
                 client_handler.start()
             except KeyboardInterrupt:
                 print('Server is shutting down...')
-                self.server.close()
-                break;
-            
-    def handle_client_connection(self, client_socket, address):
-        request = client_socket.recv(1024)
+                self.shutdown()
+                break
+                
+    def handle_client_connection(self, client_socket: socket.socket, address):
+        while True:
+            try:
+                request = client_socket.recv(1024)
+
+                payload = request.decode()
+                
+                if(payload == ''):
+                    raise AttributeError('Empty payload.')
+
+            except ConnectionError:
+                print(f"Client {address} disconnected.")
+                break
+            except Exception as e:
+                ping_sucessful = self.ping_client(client_socket, address)
+                
+                if( not ping_sucessful ):
+                    self.remove_client(address)
+                    client_socket.close()
+                    
+                    print(f"Client {address} disconnected.")
+                break
+
+    def remove_client(self, address):
+        self.lock.acquire()
+        del self.client_lists[address]
+        self.lock.release()
         
-        print('Received %s' % request)
+    def ping_client(self, client_socket: socket.socket, address):
+        ping_sucessful = True
         
-        response = 'P2P-CI/1.0 200 OK\n' + \
-                   'Date: Mon, 27 Mar 2000 12:00:00 GMT\n' + \
-                   'OS: Mac OS\n' + \
-                   'Last-Modified: Wed, 22 Mar 2000 12:00:00 GMT\n' + \
-                   'Content-Length: 128\n' + \
-                   'Content-Type: text/plain\n' + \
-                   'Content-Disposition: attachment; filename="test.txt"\n' + \
-                   'Content-Transfer-Encoding: binary\n' + \
-                   'Content-MD5: 1234567890\n' + \
-                   'X-File-Name: test.txt\n' + \
-                   'X-File-Size: 128\n' + \
-                   'X-File-Type: text/plain\n' + \
-                   'X-File-Hash: 1234567890\n' + \
-                   'X-File-Description: This is a test file.\n\n' + \
-                   'This is a test file.'
+        try:
+            client_socket.sendall('PING'.encode())
+        except ConnectionError as e:
+            ping_sucessful = False
+
+        return ping_sucessful
+    
+    def shutdown(self):
+        print('\nShutting Down...')
+        self.server.close()
         
-        client_socket.send(response.encode())
-        client_socket.close()
-        
+        try:
+            sys.exit(0)
+        except SystemExit:
+            os._exit(0)
+
 if __name__ == '__main__':
     server = Server()
-    
+
     server.start()
