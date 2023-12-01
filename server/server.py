@@ -3,7 +3,7 @@ import threading
 import sys 
 import os
 
-from helper import switch_server_cmd, switch_client_request
+from server.server_helper import switch_server_cmd, switch_client_request
 
 class Server:
     def __init__(
