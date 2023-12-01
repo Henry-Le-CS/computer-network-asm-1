@@ -68,6 +68,15 @@ def parse_client_request (request: str, address):
         payload = (client_name, address)
         method = 'set_client_name'
         
+    elif request_method == 'PUBLISH_FILE_INFO':
+        validate_length(request, 3, delimiter=delimiter) # keyword, file_name, file_path
+        
+        file_path = splitted_command[1]
+        file_name = splitted_command[2]
+        
+        payload = (file_name, file_path, address)
+        method = 'add_file_reference'
+        
     else:
         raise MyException('Invalid request.')
 

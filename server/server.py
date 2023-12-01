@@ -21,6 +21,17 @@ class Server:
         
         self.lock = threading.Lock()
         
+        """
+        file_references = {
+            file_name: [
+                ((host, port), file_path),
+                ((host, port), file_path),
+                ...
+            ]
+        }
+        """
+        self.file_references = {} 
+        
     def start(self):
         print('Starting the server on %s:%s' % (self.server_host, self.server_port))
 
@@ -88,6 +99,7 @@ class Server:
                 
                 method, payload = parse_client_request(request, address)
                 
+                # Call method with parsed payload
                 if(hasattr(self, method) and callable(getattr(self, method))):
                     getattr(self, method)(payload)
 
@@ -125,8 +137,7 @@ class Server:
     def client_socket_exists(self, address):
         if self.client_socket_lists.keys().__contains__(address):
             return True
-        
-        
+          
     def remove_client(self, address):
         if not self.client_socket_exists(address):
             return
@@ -179,6 +190,41 @@ class Server:
         except SystemExit:
             os._exit(0)
 
+    def add_file_reference(self, payload):
+        self.lock.acquire()
+        
+        file_name, file_path, client_address, = payload
+        
+        if not self.file_references.keys().__contains__(file_name):
+            self.file_references[file_name] = []
+            
+        self.file_references[file_name].append((client_address, file_path))
+        
+        self.lock.release()
+        
+    def discover_client (self, hostname):
+        files_information = []
+        
+        client_address = self.client_name_lists[hostname]
+        
+        for file_name, file_references in self.file_references.items():
+            # Check for all file references whose address is the same as client_address
+            for client_address, file_path in file_references:
+                # Check host and port
+                if client_address == client_address:
+                    files_information.append({
+                        'file_name': file_name,
+                        'file_path': file_path
+                    })
+                    break
+                
+        print(f'Files from host {hostname}:')
+        
+        for file_information in files_information:
+            print(f'File name: {file_information["file_name"]}, file path: {file_information["file_path"]}')
+    
+    
+        
 if __name__ == '__main__':
     server = Server()
 
