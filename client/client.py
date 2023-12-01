@@ -59,7 +59,7 @@ class Client(object):
     def set_client_name(self):
         try:            
             # TODO: Fetch hostname from the system, if exists then terminate the program
-            message = 'set_client_name ' + self.hostname
+            message = 'SET_CLIENT_NAME\n' + self.hostname
             self.server.sendall(message.encode())
         except Exception as e:
             print(e)

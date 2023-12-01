@@ -46,28 +46,29 @@ def parse_server_cmd (command: str):
     elif keyword.lower() == 'exit':
         method = 'shutdown'
 
-        print(payload)
     else:
         raise MyException('Invalid command !')
     
     return method, payload
 
 def parse_client_request (request: str, address):
-    splitted_command = request.split()
+    splitted_command = request.splitlines()
     
     method = ''
     payload = None
+    delimiter = '\n'
     
-    keyword = splitted_command[0].strip()
-
-    if keyword.lower() == 'set_client_name':
-        validate_length(request, 2) # keyword, client_name
+    request_method = splitted_command[0].strip()
+    
+    if request_method == 'SET_CLIENT_NAME':
+        validate_length(request, 2, delimiter=delimiter) # keyword, client_name
         
         client_name = splitted_command[1]
         
         payload = (client_name, address)
         method = 'set_client_name'
+        
     else:
         raise MyException('Invalid request.')
-    
+
     return method, payload
