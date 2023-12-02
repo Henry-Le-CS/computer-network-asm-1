@@ -81,7 +81,7 @@ class Client():
                   
     def cli(self):
         while True:
-            inputStr = 'Select peer > ' if self.is_selecting_peer else '> '
+            inputStr = 'Select option > ' if self.is_selecting_peer else '> '
             try:
                 command = input(inputStr)
                 
@@ -144,16 +144,16 @@ class Client():
         print(f'Select peer to download file {file_name} from: \n')
         
         for i in range(len(options)):
-            self.peer_options[i] = options[i]
-            print(f'{i}. {options[i]}')
+            self.peer_options[i] = options[i] + ' ' + file_name
+            print(f'{i}) {options[i]}')
         
-        print('\nSelect peer > ', end = '', flush=True)
+        print('\nSelect option > ', end = '', flush=True)
         self.is_selecting_peer = True
 
     def download_from_peer(self, payload):
-        hostname, host, port, file_path = payload
+        hostname, host, port, file_path, file_name = payload
         
-        print(f'\rDownloading file from {hostname}...', flush=True)
+        print(f'\rDownloading file {file_name} from {hostname}...', flush=True)
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     

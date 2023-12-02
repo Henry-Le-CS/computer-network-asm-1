@@ -56,7 +56,9 @@ def parse_client_cmd (command: str, is_selecting_peer: bool = False, peer_option
         if(not peer_options[selected_peer]):
             raise MyException('Invalid peer !')
         
-        payload = peer_options[selected_peer]
+        splitted_payload = peer_options[selected_peer].split() # split a tring by space
+          
+        payload = tuple(splitted_payload)
         method = 'download_from_peer'
     else:
         raise MyException('Invalid command !')
@@ -117,8 +119,7 @@ def parse_server_response(response: str):
         for i in range(2, optionCount):
             current_option = splitted_res[i]
             
-            hostname, host, port, file_path = current_option.split()
-            options.append((hostname, host, port, file_path))
+            options.append(current_option)
             
         payload = (file_name, options)
         method = 'display_peer_options'
