@@ -9,7 +9,7 @@ def validate_length (text: str, length: int, delimiter: str = ' '):
     if len(splitted_text) < length:
         raise MyException('Missing arguments')
 
-def parse_client_cmd (command: str):
+def parse_client_cmd (command: str, is_selecting_peer: bool = False, peer_options: dict = {}):
     """
     Args:
         command (str): User's command line
@@ -48,6 +48,16 @@ def parse_client_cmd (command: str):
     elif keyword.lower() == 'exit':
         method = 'shutdown'
 
+    elif is_selecting_peer:
+        validate_length(command, 1)
+        
+        selected_peer = int(splitted_command[0])
+        
+        if(not peer_options[selected_peer]):
+            raise MyException('Invalid peer !')
+        
+        payload = peer_options[selected_peer]
+        method = 'download_from_peer'
     else:
         raise MyException('Invalid command !')
     
@@ -111,7 +121,7 @@ def parse_server_response(response: str):
             options.append((hostname, host, port, file_path))
             
         payload = (file_name, options)
-        method = 'select_peer'
+        method = 'display_peer_options'
     else:
-        method = 'PRINT'
+        method = 'print'
     return method, payload

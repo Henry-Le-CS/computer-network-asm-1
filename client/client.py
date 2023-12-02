@@ -22,6 +22,9 @@ class Client():
         self.upload_port = upload_port
         self.hostname = hostname
         
+        self.is_selecting_peer = False
+        self.peer_options = {}
+        
     def start(self):
         print('Start connecting to the server on %s:%s' % (self.server_host, self.server_port))
         
@@ -38,27 +41,31 @@ class Client():
             print(e)
             self.shutdown()
             
-        cli_thread = threading.Thread(target=self.cli)
-        cli_thread.start()
+        set_client_name_thread = threading.Thread(target=self.set_client_name)
+        set_client_name_thread.start()
+
+        # Wait for set_client_name to complete before starting cli
+        set_client_name_thread.join()
         
-        self.set_client_name()
-        
+        self.cli_thread = threading.Thread(target=self.cli)
+        self.cli_thread.start()
+                
         while True:
             try:
-                data = self.server.recv(1024)
+                data = self.server.recv(1024).decode()
+                
                 if data:
-                    data = data.decode()
-                    
                     method, payload = parse_server_response(data)
-                    if(method == 'PRINT'):
+                    if(method == 'print'):
                         print(data)
+                        
                     elif(hasattr(self, method) and callable(getattr(self, method))):
                         getattr(self, method)(payload)
                     
             except Exception as e:
                 print(e)
                 break
-            except KeyboardInterrupt:
+            except BaseException:
                 print('Client is shutting down...')
                 self.shutdown()
                 break
@@ -74,23 +81,27 @@ class Client():
                   
     def cli(self):
         while True:
+            inputStr = 'Select peer > ' if self.is_selecting_peer else '> '
             try:
-                command = input('> ')
+                command = input(inputStr)
                 
                 if command == '':
                     continue
                 
-                method, payload = parse_client_cmd(command)
+                method, payload = parse_client_cmd(command, self.is_selecting_peer,  self.peer_options)
                 
-                if(hasattr(self, method) and callable(getattr(self, method))):
+                if hasattr(self, method) and callable(getattr(self, method)):
                     getattr(self, method)(payload)
-                
-                
+                    
+                self.is_selecting_peer = False
+                self.peer_options = {}
+
             except Exception as e:
                 print(e)
             except BaseException:
+                print('Client is shutting down...')
                 self.shutdown()
-                
+
     def shutdown(self, payload = None):
         print('\nShutting Down...')
 
@@ -125,10 +136,24 @@ class Client():
         message = 'FETCH_FILE_INFO\n' + file_name
         self.server.send(message.encode())
 
-    def select_peer(self, payload):
+    def display_peer_options(self, payload):
         file_name, options = payload
         
-        print(options)
+        self.peer_options = {}
+        
+        print(f'Select peer to download file {file_name} from: \n')
+        
+        for i in range(len(options)):
+            self.peer_options[i] = options[i]
+            print(f'{i}. {options[i]}')
+        
+        print('\nSelect peer > ', end = '', flush=True)
+        self.is_selecting_peer = True
+
+    def download_from_peer(self, payload):
+        hostname, host, port, file_path = payload
+        
+        print(f'\rDownloading file from {hostname}...', flush=True)
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     
@@ -136,6 +161,6 @@ if __name__ == '__main__':
     
     args = parser.parse_args()
     
-    client = Client(hostname=args.hostname, server_host='192.168.0.163')
+    client = Client(hostname=args.hostname, server_host='192.168.7.22')
     
     client.start()

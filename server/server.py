@@ -259,6 +259,6 @@ class Server:
         client.sendall(message.encode())
         
 if __name__ == '__main__':
-    server = Server(server_host='192.168.0.163')
+    server = Server(server_host='192.168.7.22')
 
     server.start()
