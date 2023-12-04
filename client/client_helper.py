@@ -77,7 +77,6 @@ def parse_server_response(response: str):
     
     method = ''
     payload = None
-    delimiter = '\n'
     
     keyword = splitted_res[0].strip()
 
@@ -85,7 +84,7 @@ def parse_server_response(response: str):
         
         file_name = splitted_res[1]
         
-        optionCount = len(splitted_res) # minus keyword, file_name line
+        optionCount = len(splitted_res)
         
         options = []
         
