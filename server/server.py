@@ -56,6 +56,7 @@ class Server:
                 )
 
                 client_handler.start()
+                print('> ')
             except KeyboardInterrupt:
                 print('Server is shutting down...')
                 self.shutdown()
@@ -96,6 +97,7 @@ class Server:
 
             except ConnectionError:
                 print(f"Client {address} disconnected.\n>")
+                print('> ')
                 break
             except Exception as e:
                 tests = 3
@@ -119,7 +121,9 @@ class Server:
                     
                 if(shoud_break):
                     print(e)
+                    print('> ')
                     break
+            
 
     def test_connection(self, client_socket: socket.socket, address):
         ping_sucessful = True
