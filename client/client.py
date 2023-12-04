@@ -121,7 +121,7 @@ class Client():
         file_exists = self.check_file_exist(file_path, file_name)
         
         if not file_exists:
-            print(f'File {file_name} does not exists.\n')
+            print(f'File {file_name} does not exist.\n')
             return
         
         message = 'PUBLISH_FILE_INFO\n' + file_path + '\n' + file_name + '\n' + str(self.upload_port)
@@ -239,7 +239,7 @@ class Client():
             file_exists = self.check_file_exist(file_path, file_name)
             
             if not file_exists:
-                conn.send(f'File {file_name} does not exists at {file_path}'.encode())
+                conn.send(f'File {file_name} does not exist at {file_path}'.encode())
                 return
             
             path = file_path + '/' + file_name

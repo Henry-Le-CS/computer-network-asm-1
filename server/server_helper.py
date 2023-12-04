@@ -77,7 +77,7 @@ def parse_client_request (request: str, address):
         address = (address[0], upload_port)
         
         payload = (file_name, file_path, address)
-        method = 'add_file_reference'
+        method = 'publish_filename'
     
     elif request_method == 'FETCH_FILE_INFO':
         validate_length(request, 2, delimiter=delimiter) # keyword, file_name
