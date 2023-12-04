@@ -176,10 +176,11 @@ class Client():
             
             path = file_path + '/' + file_name
             
-            with open('./test/a_2.txt', 'w') as f:
+            self.create_folder_if_not_exists(file_path)
+            
+            with open(path, 'w') as f:
                 data = peer_socket.recv(1024).decode()
                 while data:
-                    print(data)
                     f.write(data)
                     data = peer_socket.recv(1024).decode()
                 
