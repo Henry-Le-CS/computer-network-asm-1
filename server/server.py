@@ -79,16 +79,7 @@ class Server:
                 print(e)
             except BaseException:
                 self.shutdown()
-    
-    def set_client_name (self, payload):
-        client_name, address = payload
-        
-        print(f'Setting client {address}\'s name to {client_name}...\n>')
-        
-        self.lock.acquire()
-        self.client_name_lists[client_name] = address
-        self.lock.release()
-        
+                    
     def handle_client_connection(self, client_socket: socket.socket, address):
         while True:
             try:
@@ -129,7 +120,40 @@ class Server:
                 if(shoud_break):
                     print(e)
                     break
-    
+
+    def test_connection(self, client_socket: socket.socket, address):
+        ping_sucessful = True
+        
+        client_is_removed = not client_socket or not self.client_socket_lists.keys().__contains__(address)
+        
+        if(client_is_removed):
+            return False
+        
+        try:
+            client_socket.sendall('Test connection'.encode())
+        except ConnectionError:
+            ping_sucessful = False
+
+        return ping_sucessful
+
+    def ping_client(self, client_name):
+        client_address = self.client_name_lists[client_name]
+                
+        try:
+            client = self.client_socket_lists[client_address]
+            client.sendall('Server has pinged you !'.encode())
+        except ConnectionError as e:
+            print(f'Client {client_name} is not available.\n>')
+
+    def set_client_name (self, payload):
+        client_name, address = payload
+        
+        print(f'Setting client {address}\'s name to {client_name}...\n>')
+        
+        self.lock.acquire()
+        self.client_name_lists[client_name] = address
+        self.lock.release()
+        
     def client_name_exists(self, client_name):
         if self.client_name_lists.keys().__contains__(client_name):
             return True
@@ -157,30 +181,6 @@ class Server:
             if self.client_name_exists(client_name):
                 del self.client_name_lists[client_name]
                 break
-    
-    def test_connection(self, client_socket: socket.socket, address):
-        ping_sucessful = True
-        
-        client_is_removed = not client_socket or not self.client_socket_lists.keys().__contains__(address)
-        
-        if(client_is_removed):
-            return False
-        
-        try:
-            client_socket.sendall('Test connection'.encode())
-        except ConnectionError:
-            ping_sucessful = False
-
-        return ping_sucessful
-    
-    def ping_client(self, client_name):
-        client_address = self.client_name_lists[client_name]
-                
-        try:
-            client = self.client_socket_lists[client_address]
-            client.sendall('Server has pinged you !'.encode())
-        except ConnectionError as e:
-            print(f'Client {client_name} is not available.\n>')
             
     def shutdown(self, payload=None):
         print('\nShutting Down...')
@@ -250,7 +250,7 @@ class Server:
         res.append(file_name)
         
         for client_address, file_path in self.file_references[file_name]:
-            client_name = self.get_client_name(client_address)
+            client_name = self.get_client_name(address)
             res.append(f'{client_name} {client_address[0]} {client_address[1]} {file_path}')       
         
         message = '\n'.join(res)

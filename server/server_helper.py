@@ -1,5 +1,3 @@
-import socket
-
 class MyException(Exception):
     pass
 
