@@ -185,9 +185,6 @@ class Client():
                     
             print(f'\rDownloaded file {file_name} from {hostname}...', flush=True)
             
-            inputStr = 'Select option > ' if self.is_selecting_peer else '> '
-            print(inputStr, end='', flush=True)
-            
             peer_socket.close()
         except Exception as e:
             print(e)
