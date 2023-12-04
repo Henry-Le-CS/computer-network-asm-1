@@ -65,40 +65,6 @@ def parse_client_cmd (command: str, is_selecting_peer: bool = False, peer_option
     
     return method, payload
 
-def parse_server_request (request: str, address):
-    splitted_command = request.splitlines()
-    
-    method = ''
-    payload = None
-    delimiter = '\n'
-    
-    keyword = splitted_command[0].strip()
-
-    if keyword.lower() == 'ping':
-        validate_length(request, 2)
-        
-        client_name = splitted_command[1]
-        
-        payload = client_name
-        method = 'ping_client'
-        
-    elif keyword.lower() == 'discover':
-        client_name = splitted_command[1]
-        
-        payload = client_name
-        method = 'discover_client'
-
-    elif keyword.lower() == 'list':
-        method = 'list_client'
-        
-    elif keyword.lower() == 'exit':
-        method = 'shutdown'
-
-    else:
-        raise MyException('Invalid command !')
-    
-    return method, payload
-
 def parse_server_response(response: str):
     splitted_res = response.splitlines()
     
