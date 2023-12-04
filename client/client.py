@@ -25,6 +25,9 @@ class Client():
         self.upload_port = None
         
     def start(self):
+        """
+            Start the client
+        """
         print('Start connecting to the server on %s:%s' % (self.server_host, self.server_port))
         
         self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -40,16 +43,19 @@ class Client():
             print(e)
             self.shutdown()
         
+        # Init upload to start listening for peers, as well as setting upload port
         self.init_upload_thread = threading.Thread(target=self.init_upload)
         self.init_upload_thread.start()
         
+        # Wait for the upload port to be set. Could use thread.join()
         while not self.upload_port:
             pass
-
+        
         self.set_host_addresses()
         
         print(f'Start listening for peers on port {self.upload_port}')
         
+        # Start a new thread for cli
         self.cli_thread = threading.Thread(target=self.cli)
         self.cli_thread.start()
                 
@@ -59,10 +65,11 @@ class Client():
                 
                 if data:
                     method, payload = parse_server_response(data)
+                    # If the method is print, then print the payload
                     if(method == 'print'):
                         inputStr = 'Select option > ' if self.is_selecting_peer else '> '
                         print(data + '\n' + inputStr, end = '', flush=True)
-                        
+                    # Else if the method is defined in the client, then call it
                     elif(hasattr(self, method) and callable(getattr(self, method))):
                         getattr(self, method)(payload)
                     
@@ -86,6 +93,7 @@ class Client():
     def cli(self):
         while True:
             inputStr = 'Select option > ' if self.is_selecting_peer else '> '
+            
             try:
                 command = input(inputStr)
                 
@@ -96,7 +104,7 @@ class Client():
                 
                 if hasattr(self, method) and callable(getattr(self, method)):
                     getattr(self, method)(payload)
-                    
+                
                 self.is_selecting_peer = False
                 self.peer_options = {}
 
@@ -105,14 +113,6 @@ class Client():
             except BaseException:
                 print('Client is shutting down...')
                 self.shutdown()
-
-    def shutdown(self, payload = None):
-        print('\nShutting Down...')
-
-        try:
-            sys.exit(0)
-        except SystemExit:
-            os._exit(0)
             
     def publish_file_info(self, payload):
         file_path, file_name = payload
@@ -272,6 +272,14 @@ class Client():
         finally:
             conn.close()
 
+
+    def shutdown(self, payload = None):
+        print('\nShutting Down...')
+
+        try:
+            sys.exit(0)
+        except SystemExit:
+            os._exit(0)
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     
