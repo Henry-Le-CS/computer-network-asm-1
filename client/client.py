@@ -60,10 +60,8 @@ class Client():
                 if data:
                     method, payload = parse_server_response(data)
                     if(method == 'print'):
-                        print(data)
-                        
                         inputStr = 'Select option > ' if self.is_selecting_peer else '> '
-                        print(inputStr, end='', flush=True)
+                        print(data + '\n' + inputStr, end = '', flush=True)
                         
                     elif(hasattr(self, method) and callable(getattr(self, method))):
                         getattr(self, method)(payload)
@@ -130,6 +128,9 @@ class Client():
         self.server.send(message.encode())
     
     def create_folder_if_not_exists(self, file_path):
+        if(file_path == '.'):
+            return
+        
         Path(file_path).mkdir(parents=True, exist_ok=True)
         
     def check_file_exist (self, file_path, file_name):

@@ -27,9 +27,16 @@ def parse_client_cmd (command: str, is_selecting_peer: bool = False, peer_option
     keyword = splitted_command[0].strip()
 
     if keyword.lower() == 'publish':
-        validate_length(command, 3)
+        # validate_length(command, 3)
+        file_path = None
+        file_name = None
         
-        file_path, file_name = splitted_command[1], splitted_command[2]
+        # Allow current directory. eg ping test.txt
+        if(len(splitted_command) < 3):
+            file_path = "."
+            file_name = splitted_command[1]
+        else:
+            file_path, file_name = splitted_command[1], splitted_command[2]
         
         # Replace backslash with slash, so we can make new folder if they do not exists
         file_path = file_path.replace('\\', '/')

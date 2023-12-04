@@ -97,7 +97,7 @@ class Server:
                     getattr(self, method)(payload)
 
             except ConnectionError:
-                print(f"Client {address} disconnected.\n>")
+                print(f"Client {address} disconnected.\n> ", end='')
                 print('> ')
                 break
             except Exception as e:
@@ -114,15 +114,13 @@ class Server:
                         self.remove_client(address)
                         client_socket.close()
                         
-                        print(f"Client {address} disconnected.\n>")
+                        print(f"Client {address} disconnected.\n> ", end='')
                         shoud_break = True
                         
                     time.sleep(0.5)
                     tests -= 1
                     
                 if(shoud_break):
-                    print(e)
-                    print('> ')
                     break
             
     def test_connection(self, client_socket: socket.socket, address):
@@ -154,7 +152,7 @@ class Server:
     def set_client_addresses(self, payload):
         client_name, address, client_upload_port = payload
 
-        print(f'Setting client {address}\'s name to {client_name}...\n>')
+        print(f'Setting client {address}\'s name to {client_name}...\n> ', end='')
 
         host, port = address
 
@@ -257,6 +255,10 @@ class Server:
         
     def discover_client (self, hostname):
         files_information = []
+        
+        if not self.client_name_exists(hostname):
+            print(f'Client {hostname} not found.')
+            return
         
         client_addresses = self.client_name_lists[hostname]
         address = (client_addresses['host'], str(client_addresses['upload_port']))
