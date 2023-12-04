@@ -149,15 +149,17 @@ class Client():
         self.peer_options = {}
         
         if(len(options) == 0):
-            print(f'No peer has file {file_name}.\n> ')
+            print(f'No peer has file {file_name}.\n> ', end = '', flush=True)
             self.is_selecting_peer = False
             return
         
-        print(f'Select peer to download file {file_name} from: \n')
+        print(f'Select peer to download file {file_name} from: (example: 0)\n')
         
         for i in range(len(options)):
             self.peer_options[i] = options[i] + ' ' + file_name
-            print(f'{i}) {options[i]}')
+            
+            hostname, uploader_host, uploader_port, file_path = options[i].split()
+            print(f'{i}) Hostname: {hostname}, IP: {uploader_host}, Port: {uploader_port}, File Path: {file_path}')
         
         print('\nSelect option > ', end = '', flush=True)
         self.is_selecting_peer = True
