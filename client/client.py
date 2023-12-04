@@ -183,11 +183,11 @@ class Client():
             
             self.create_folder_if_not_exists(file_path)
             
-            with open(path, 'w') as f:
-                data = peer_socket.recv(1024).decode()
+            with open(path, 'wb') as f:
+                data = peer_socket.recv(1024)
                 while data:
                     f.write(data)
-                    data = peer_socket.recv(1024).decode()
+                    data = peer_socket.recv(1024)
                 
                 f.flush()
                     
@@ -248,12 +248,12 @@ class Client():
                 print('\nUploading...')
 
                 send_length = 0
-                with open(path, 'r') as file:
+                with open(path, 'rb') as file:
                     to_send = file.read(1024)
                     
                     while to_send:
-                        send_length += len(to_send.encode())
-                        conn.sendall(to_send.encode())
+                        send_length += len(to_send)
+                        conn.sendall(to_send)
                         to_send = file.read(1024)
 
                 print('Uploading successfully')
@@ -271,7 +271,6 @@ class Client():
             self.shutdown()
         finally:
             conn.close()
-
 
     def shutdown(self, payload = None):
         print('\nShutting Down...')
