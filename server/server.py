@@ -17,7 +17,7 @@ class Server:
         self.upload_port = upload_port
 
         self.client_socket_lists = {}  # {(host, port): client}
-        self.client_name_lists = {}  # {client_name: (host, port)}
+        self.client_name_lists = {}  # {client_name: (host, port, uploader_port)}
         
         self.lock = threading.Lock()
         
@@ -137,23 +137,33 @@ class Server:
         return ping_sucessful
 
     def ping_client(self, client_name):
-        client_address = self.client_name_lists[client_name]
+        client_addresses = self.client_name_lists[client_name]
                 
         try:
-            client = self.client_socket_lists[client_address]
+            socket_address = (client_addresses['host'], client_addresses['port'])
+            
+            client = self.client_socket_lists[socket_address]
             client.sendall('Server has pinged you !'.encode())
         except ConnectionError as e:
             print(f'Client {client_name} is not available.\n>')
 
-    def set_client_name (self, payload):
-        client_name, address = payload
-        
+    def set_client_addresses(self, payload):
+        client_name, address, client_upload_port = payload
+
         print(f'Setting client {address}\'s name to {client_name}...\n>')
-        
+
+        host, port = address
+
         self.lock.acquire()
-        self.client_name_lists[client_name] = address
-        self.lock.release()
         
+        self.client_name_lists[client_name] = {
+            'host': host,
+            'port': int(port),
+            'upload_port': int(client_upload_port)
+        }
+        
+        self.lock.release()
+
     def client_name_exists(self, client_name):
         if self.client_name_lists.keys().__contains__(client_name):
             return True
@@ -193,9 +203,7 @@ class Server:
     def add_file_reference(self, payload):
         self.lock.acquire()
         
-        file_name, file_path, client_address = payload
-        
-        addr = client_address
+        file_name, file_path, uploader_address = payload
         
         # Work around: file_path will be destructured from self.file_references[file_name]. So we need a cloned variable
         path = file_path
@@ -204,18 +212,19 @@ class Server:
             self.file_references[file_name] = []
             
         for client_address, file_path in self.file_references[file_name]:
-            if path == file_path and client_address == addr:
+            if path == file_path and client_address == uploader_address:
                 print(f'File {file_name} at {path} directory has already been recorded.\n')
                 return
         
-        self.file_references[file_name].append((addr, path))
+        self.file_references[file_name].append((uploader_address, path))
         
         self.lock.release()
         
     def discover_client (self, hostname):
         files_information = []
         
-        address = self.client_name_lists[hostname]
+        client_addresses = self.client_name_lists[hostname]
+        address = (client_addresses['host'], client_addresses['port'])
         
         for file_name, file_references in self.file_references.items():
             # Check for all file references whose address is the same as client_address
@@ -233,9 +242,33 @@ class Server:
             print(f'File name: {file_information["file_name"]}, file path: {file_information["file_path"]}')
  
     def get_client_name(self, address):
-        for client_name, client_address in self.client_name_lists.items():
-            if client_address == address:
+        for client_name, client_addresses in self.client_name_lists.items():
+            uploader_address = (client_addresses['host'], str(client_addresses['upload_port']))
+            
+            if uploader_address == address:
                 return client_name
+            
+    def isClientFetchingItself(self, address, uploader_address):        
+        """
+            The purpose of this function is to find the upload address of the current client who is fetching data
+            By checking the client's host and port, we can find the upload address of the client
+            
+            If the upload address match the input, then the client is fetching itself
+        Args:
+            address (tuple): (host, port)
+            uploader_address (tuple): (host, upload_port)
+
+        Returns:
+            boolean: is client fetching itself
+        """
+        for client_name, client_addresses in self.client_name_lists.items():
+            if client_addresses['host'] == address[0] and client_addresses['port'] == address[1]:
+                uploader_addr = (client_addresses['host'], str(client_addresses['upload_port']))
+            
+                if uploader_addr == uploader_address:
+                    return True
+            
+        return False
             
     def fetch_peers (self, payload):        
         file_name, address = payload
@@ -246,12 +279,15 @@ class Server:
             client.sendall(f'File {file_name} not found'.encode())
             return
         
-        res = ['PEERS']
+        res = ['PEERS'] # keyword
         res.append(file_name)
         
-        for client_address, file_path in self.file_references[file_name]:
-            client_name = self.get_client_name(address)
-            res.append(f'{client_name} {client_address[0]} {client_address[1]} {file_path}')       
+        for uploader_address, file_path in self.file_references[file_name]:
+            if self.isClientFetchingItself(address=address, uploader_address=uploader_address):
+                continue
+            
+            client_name = self.get_client_name(uploader_address)
+            res.append(f'{client_name} {uploader_address[0]} {uploader_address[1]} {file_path}')       
         
         message = '\n'.join(res)
         

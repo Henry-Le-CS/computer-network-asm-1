@@ -58,13 +58,14 @@ def parse_client_request (request: str, address):
     
     request_method = splitted_command[0].strip()
     
-    if request_method == 'SET_CLIENT_NAME':
+    if request_method == 'SET_HOST_ADDRESSES':
         validate_length(request, 2, delimiter=delimiter) # keyword, client_name
         
         client_name = splitted_command[1]
+        client_upload_port = splitted_command[2]
         
-        payload = (client_name, address)
-        method = 'set_client_name'
+        payload = (client_name, address, client_upload_port)
+        method = 'set_client_addresses'
         
     elif request_method == 'PUBLISH_FILE_INFO':
         validate_length(request, 4, delimiter=delimiter) # keyword, file_name, file_path, upload_port
