@@ -224,13 +224,13 @@ class Server:
         files_information = []
         
         client_addresses = self.client_name_lists[hostname]
-        address = (client_addresses['host'], client_addresses['port'])
+        address = (client_addresses['host'], str(client_addresses['upload_port']))
         
         for file_name, file_references in self.file_references.items():
             # Check for all file references whose address is the same as client_address
-            for client_address, file_path in file_references:
+            for uploader_address, file_path in file_references:
                 # Check host and port
-                if client_address == address:
+                if uploader_address == address:
                     files_information.append({
                         'file_name': file_name,
                         'file_path': file_path
