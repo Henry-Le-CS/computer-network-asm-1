@@ -3,6 +3,7 @@ import threading
 import sys 
 import os
 import time
+import copy
 from server_helper import parse_server_cmd, parse_client_request
 
 class Server:
@@ -124,7 +125,6 @@ class Server:
                     print('> ')
                     break
             
-
     def test_connection(self, client_socket: socket.socket, address):
         ping_sucessful = True
         
@@ -176,26 +176,57 @@ class Server:
         if self.client_socket_lists.keys().__contains__(address):
             return True
           
-    def remove_client(self, address):
+    def remove_client(self, address):        
+        self.lock.acquire()
+        
+        self.remove_file_reference(address)
+        self.remove_client_name(address)
+        self.remove_client_socket(address)
+        
+        self.lock.release()
+    
+    def remove_client_socket(self, address):
         if not self.client_socket_exists(address):
             return
         
-        self.lock.acquire()
+        new_client_socket_lists = {}
         
-        del self.client_socket_lists[address]
-        self.remove_client_name(address)
-        
-        self.lock.release()
-        
-    def remove_client_name(self, address):
-        for client_name, client_address in self.client_name_lists.items():
-            if client_address != address:
+        for client_address, client_socket in self.client_socket_lists.items():
+            if client_address == address:
                 continue
             
-            if self.client_name_exists(client_name):
-                del self.client_name_lists[client_name]
-                break
+            new_client_socket_lists[client_address] = client_socket
+
+        self.client_socket_lists = new_client_socket_lists
+    
+    def remove_client_name(self, address):
+        new_client_name_lists = {}
+        
+        for client_name, client_addresses in self.client_name_lists.items():
+            client_address = (client_addresses['host'], str(client_addresses['port']))
+            address = (address[0], str(address[1]))
             
+            if address == client_address:
+                continue
+            
+            new_client_name_lists[client_name] = client_addresses
+            
+        self.client_name_lists = new_client_name_lists
+    
+    def remove_file_reference(self, address):
+        new_file_references = {}
+        
+        for file_name, file_references in self.file_references.items():
+            new_file_references[file_name] = []
+            
+            for uploader_address, file_path in file_references:
+                if self.isCurrentClient(address=address, uploader_address=uploader_address):
+                    continue
+                
+                new_file_references[file_name].append((uploader_address, file_path))
+                
+        self.file_references = new_file_references
+        
     def shutdown(self, payload=None):
         print('\nShutting Down...')
         
@@ -252,12 +283,12 @@ class Server:
             if uploader_address == address:
                 return client_name
             
-    def isClientFetchingItself(self, address, uploader_address):        
+    def isCurrentClient(self, address, uploader_address):        
         """
             The purpose of this function is to find the upload address of the current client who is fetching data
             By checking the client's host and port, we can find the upload address of the client
             
-            If the upload address match the input, then the client is fetching itself
+            If the upload address match the input, then the client is fetching / calling itself
         Args:
             address (tuple): (host, port)
             uploader_address (tuple): (host, upload_port)
@@ -287,7 +318,7 @@ class Server:
         res.append(file_name)
         
         for uploader_address, file_path in self.file_references[file_name]:
-            if self.isClientFetchingItself(address=address, uploader_address=uploader_address):
+            if self.isCurrentClient(address=address, uploader_address=uploader_address):
                 continue
             
             client_name = self.get_client_name(uploader_address)
