@@ -148,6 +148,11 @@ class Client():
         
         self.peer_options = {}
         
+        if(len(options) == 0):
+            print(f'No peer has file {file_name}.\n> ')
+            self.is_selecting_peer = False
+            return
+        
         print(f'Select peer to download file {file_name} from: \n')
         
         for i in range(len(options)):

@@ -318,7 +318,7 @@ class Server:
         client = self.client_socket_lists[address]
         
         if(not self.file_references.keys().__contains__(file_name)):
-            client.sendall(f'File {file_name} not found'.encode())
+            client.sendall(f'No peer has file {file_name}.'.encode())
             return
         
         res = ['PEERS'] # keyword
