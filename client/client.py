@@ -48,7 +48,7 @@ class Client():
 
         self.set_host_addresses()
         
-        print(f'Start listening on port {self.upload_port}')
+        print(f'Start listening for peers on port {self.upload_port}')
         
         self.cli_thread = threading.Thread(target=self.cli)
         self.cli_thread.start()

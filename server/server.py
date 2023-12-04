@@ -139,15 +139,20 @@ class Server:
         return ping_sucessful
 
     def ping_client(self, client_name):
+        if not self.client_name_exists(client_name):
+            print(f'Client {client_name} not found.')
+            return
+        
         client_addresses = self.client_name_lists[client_name]
-                
         try:
             socket_address = (client_addresses['host'], client_addresses['port'])
             
             client = self.client_socket_lists[socket_address]
-            client.sendall('Server has pinged you !'.encode())
+            client.sendall(f'Server at {self.server_host}:{self.server_port} has pinged you !'.encode())
+            
+            print(f'Pinged client {client_name} at {socket_address}.\n', end='')
         except ConnectionError as e:
-            print(f'Client {client_name} is not available.\n>')
+            print(f'Client {client_name} is not available.\n')
 
     def set_client_addresses(self, payload):
         client_name, address, client_upload_port = payload
