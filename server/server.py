@@ -237,8 +237,7 @@ class Server:
             if client_address == address:
                 return client_name
             
-    def fetch_peers (self, payload):
-        
+    def fetch_peers (self, payload):        
         file_name, address = payload
         
         client = self.client_socket_lists[address]
@@ -259,6 +258,6 @@ class Server:
         client.sendall(message.encode())
         
 if __name__ == '__main__':
-    server = Server(server_host='192.168.7.22')
+    server = Server(server_host='192.168.1.203')
 
     server.start()

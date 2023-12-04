@@ -4,7 +4,7 @@ import os
 import sys
 import argparse
 
-from client_helper import parse_client_cmd, parse_server_response
+from client_helper import parse_client_cmd, parse_server_response, MyException
 from pathlib import Path
 
 class Client():
@@ -13,17 +13,16 @@ class Client():
         hostname,
         server_host='192.168.2.189', 
         server_port=7734, 
-        upload_port=None,
 
     ):
         self.server_host = server_host
         self.server_port = server_port
         
-        self.upload_port = upload_port
         self.hostname = hostname
         
         self.is_selecting_peer = False
         self.peer_options = {}
+        self.upload_port = None
         
     def start(self):
         print('Start connecting to the server on %s:%s' % (self.server_host, self.server_port))
@@ -46,6 +45,16 @@ class Client():
 
         # Wait for set_client_name to complete before starting cli
         set_client_name_thread.join()
+        
+        self.init_upload_thread = threading.Thread(target=self.init_upload)
+        self.init_upload_thread.start()
+        
+        while not self.upload_port:
+            pass
+        
+        # self.init_upload_thread.join()
+        
+        print(f'Start listening on port {self.upload_port}')
         
         self.cli_thread = threading.Thread(target=self.cli)
         self.cli_thread.start()
@@ -120,7 +129,7 @@ class Client():
             print(f'File {file_name} does not exists.\n')
             return
         
-        message = 'PUBLISH_FILE_INFO\n' + file_path + '\n' + file_name
+        message = 'PUBLISH_FILE_INFO\n' + file_path + '\n' + file_name + '\n' + str(self.upload_port)
         self.server.send(message.encode())
     
     def create_folder_if_not_exists(self, file_path):
@@ -153,7 +162,107 @@ class Client():
     def download_from_peer(self, payload):
         hostname, host, port, file_path, file_name = payload
         
+        port = int(port)
+        
         print(f'\rDownloading file {file_name} from {hostname}...', flush=True)
+        
+        peer_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        
+        try:
+            peer_socket.connect((host, port))
+            
+            message = 'DOWNLOAD_FILE\n' + file_path + '\n' + file_name
+            peer_socket.send(message.encode())
+            
+            path = file_path + '/' + file_name
+            
+            with open('./test/a_2.txt', 'w') as f:
+                data = peer_socket.recv(1024).decode()
+                while data:
+                    print(data)
+                    f.write(data)
+                    data = peer_socket.recv(1024).decode()
+                
+                f.flush()
+                    
+            print(f'\rDownloaded file {file_name} from {hostname}...', flush=True)
+            
+            peer_socket.close()
+        except Exception as e:
+            print(e)
+            
+    def init_upload(self):
+        try:
+            self.upload_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.upload_socket.bind(('', 0))
+
+            self.upload_port = self.upload_socket.getsockname()[1]
+            self.upload_socket.listen(5)
+            
+        except Exception as e:
+            print(e)
+                
+        while True:
+            try:
+                conn, addr = self.upload_socket.accept()
+                print(f'\rUpload request from {addr[0]}:{addr[1]}', flush=True)
+                
+                upload_thread = threading.Thread(target=self.upload_file, args=(conn, addr))
+                upload_thread.start()
+            except Exception as e:
+                print(e)
+                break
+            except BaseException:
+                print('Client is shutting down...')
+                self.shutdown()
+                break
+        self.upload_socket.close()
+            
+    def upload_file(self, conn: socket.socket , addr):
+        try:
+            data = conn.recv(1024).decode("utf-8")
+
+            if not data:
+                return
+            
+            method, file_path, file_name = data.split()
+            
+            if method != 'DOWNLOAD_FILE':
+                return
+            
+            file_exists = self.check_file_exist(file_path, file_name)
+            
+            if not file_exists:
+                conn.send('File does not exists'.encode())
+                return
+            
+            path = file_path + '/' + file_name
+            
+            try:
+                print('\nUploading...')
+
+                send_length = 0
+                with open(path, 'r') as file:
+                    to_send = file.read(1024)
+                    
+                    while to_send:
+                        send_length += len(to_send.encode())
+                        conn.sendall(to_send.encode())
+                        to_send = file.read(1024)
+
+                print('Uploading successfully')
+            except Exception:
+                raise MyException('Uploading Failed')
+
+                    
+        except Exception as e:
+            print(e)
+        except BaseException:
+            print('Client is shutting down...')
+            self.shutdown()
+        finally:
+            conn.close()
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     
@@ -161,6 +270,6 @@ if __name__ == '__main__':
     
     args = parser.parse_args()
     
-    client = Client(hostname=args.hostname, server_host='192.168.7.22')
+    client = Client(hostname=args.hostname, server_host='192.168.1.203')
     
     client.start()
