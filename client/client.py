@@ -39,20 +39,14 @@ class Client():
         except Exception as e:
             print(e)
             self.shutdown()
-            
-        set_client_name_thread = threading.Thread(target=self.set_client_name)
-        set_client_name_thread.start()
-
-        # Wait for set_client_name to complete before starting cli
-        set_client_name_thread.join()
         
         self.init_upload_thread = threading.Thread(target=self.init_upload)
         self.init_upload_thread.start()
         
         while not self.upload_port:
             pass
-        
-        # self.init_upload_thread.join()
+
+        self.set_host_addresses()
         
         print(f'Start listening on port {self.upload_port}')
         
@@ -68,6 +62,9 @@ class Client():
                     if(method == 'print'):
                         print(data)
                         
+                        inputStr = 'Select option > ' if self.is_selecting_peer else '> '
+                        print(inputStr, end='', flush=True)
+                        
                     elif(hasattr(self, method) and callable(getattr(self, method))):
                         getattr(self, method)(payload)
                     
@@ -79,10 +76,10 @@ class Client():
                 self.shutdown()
                 break
        
-    def set_client_name(self):
+    def set_host_addresses(self):
         try:            
             # TODO: Fetch hostname from the system, if exists then terminate the program
-            message = 'SET_CLIENT_NAME\n' + self.hostname
+            message = 'SET_HOST_ADDRESSES\n' + self.hostname + '\n' + str(self.upload_port)
             self.server.send(message.encode())
         except Exception as e:
             print(e)
@@ -188,6 +185,9 @@ class Client():
                     
             print(f'\rDownloaded file {file_name} from {hostname}...', flush=True)
             
+            inputStr = 'Select option > ' if self.is_selecting_peer else '> '
+            print(inputStr, end='', flush=True)
+            
             peer_socket.close()
         except Exception as e:
             print(e)
@@ -234,7 +234,7 @@ class Client():
             file_exists = self.check_file_exist(file_path, file_name)
             
             if not file_exists:
-                conn.send('File does not exists'.encode())
+                conn.send(f'File {file_name} does not exists at {file_path}'.encode())
                 return
             
             path = file_path + '/' + file_name
@@ -252,6 +252,9 @@ class Client():
                         to_send = file.read(1024)
 
                 print('Uploading successfully')
+                
+                inputStr = 'Select option > ' if self.is_selecting_peer else '> '
+                print(inputStr, end='', flush=True)
             except Exception:
                 raise MyException('Uploading Failed')
 
