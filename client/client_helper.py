@@ -54,6 +54,9 @@ def parse_client_cmd (command: str, is_selecting_peer: bool = False, peer_option
         
     elif keyword.lower() == 'exit':
         method = 'shutdown'
+        
+    elif keyword.lower() == 'list_peers':
+        method = 'list_peers'
 
     elif is_selecting_peer:
         validate_length(command, 1)

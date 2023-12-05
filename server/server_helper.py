@@ -86,6 +86,10 @@ def parse_client_request (request: str, address):
         
         payload = (file_name, address)
         method = 'fetch_peers'
+    
+    elif request_method == 'FETCH_AVAILABLE_PEERS':
+        payload = address
+        method = 'fetch_available_peers'
     else:
         raise MyException('Invalid request.')
 

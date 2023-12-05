@@ -370,7 +370,26 @@ class Server:
         except SystemExit:
             os._exit(0)       
 
+    def fetch_available_peers(self, payload):
+        client_address = payload
+        client_soc = self.client_socket_lists[client_address]
+        
+        peers = []
+        index = 1
+        # hostname, host, port, upload_port
+        for client_name, client_addresses in self.client_name_lists.items():
+            uploader_address = (client_addresses['host'], str(client_addresses['upload_port']))
+            
+            if self.isCurrentClient(address=client_address, uploader_address=uploader_address):
+                continue
+            
+            peers.append(f'\n{index}) Hostname: {client_name}, IP: {client_addresses["host"]}, Port: {client_addresses["port"]}, Upload port: {client_addresses["upload_port"]}\n')
+            index += 1
+            
+        message = '\n'.join(peers)
+        client_soc.sendall(message.encode())
+        
 if __name__ == '__main__':
-    server = Server(server_host='192.168.1.203')
+    server = Server(server_host='10.128.154.210')
 
     server.start()

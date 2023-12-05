@@ -292,6 +292,10 @@ class Client():
         finally:
             conn.close()
 
+    def list_peers(self, payload = None):
+        message = 'FETCH_AVAILABLE_PEERS\n'
+        self.server.send(message.encode())
+
     def shutdown(self, payload = None):
         print('\nShutting Down...')
 
