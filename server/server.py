@@ -385,8 +385,35 @@ class Server:
             
             peers.append(f'\n{index}) Hostname: {client_name}, IP: {client_addresses["host"]}, Port: {client_addresses["port"]}, Upload port: {client_addresses["upload_port"]}\n')
             index += 1
-            
+        
         message = '\n'.join(peers)
+        
+        if len(peers) == 0:
+            client_soc.sendall('No fetchable peer is available.'.encode())
+        
+        client_soc.sendall(message.encode())
+    
+    def fetch_all_available_files(self, payload):
+        client_address = payload
+        client_soc = self.client_socket_lists[client_address]
+        
+        files = []
+        index = 1
+        
+        for file_name, file_references in self.file_references.items():
+            for uploader_address, file_path in file_references:
+                if self.isCurrentClient(address=client_address, uploader_address=uploader_address):
+                    continue
+                
+                client_name = self.get_client_name(uploader_address)
+                files.append(f'{index}) File name: {file_name}, File path: {file_path}, Host: {client_name}, IP: {uploader_address[0]}, Upload port: {uploader_address[1]}')
+                index += 1
+            
+        message = '\n'.join(files)
+        
+        if len(files) == 0:
+            client_soc.sendall('No fetchable file is available on other peer.'.encode())
+        
         client_soc.sendall(message.encode())
         
 if __name__ == '__main__':

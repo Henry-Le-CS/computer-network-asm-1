@@ -48,15 +48,20 @@ def parse_client_cmd (command: str, is_selecting_peer: bool = False, peer_option
         validate_length(command, 2) # keyword, file_name
         
         file_name = splitted_command[1]
-        
+            
         payload = file_name
         method = 'fetch_file_info'
         
     elif keyword.lower() == 'exit':
         method = 'shutdown'
         
-    elif keyword.lower() == 'list_peers':
-        method = 'list_peers'
+    elif keyword.lower() == 'list':
+        target = splitted_command[1]
+        
+        if target.lower() == 'peers':
+            method = 'list_peers'
+        elif target.lower() == 'files':
+            method = 'list_files'
 
     elif is_selecting_peer:
         validate_length(command, 1)
