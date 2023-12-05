@@ -4,6 +4,8 @@ import os
 import sys
 import argparse
 import time
+import mimetypes
+import platform
 
 from client_helper import parse_client_cmd, parse_server_response, MyException
 from pathlib import Path
@@ -170,17 +172,23 @@ class Client():
         
         port = int(port)
         
-        print(f'\rDownloading file {file_name} from {hostname}...', flush=True)
+        print(f'\rDownloading file {file_name} from {hostname}...\n', flush=True)
         
         peer_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         
         try:
             start_time = time.time()
             peer_socket.connect((host, port))
+
             
             message = 'DOWNLOAD_FILE\n' + file_path + '\n' + file_name
             peer_socket.send(message.encode())
             
+            res_header = peer_socket.recv(1024).decode("utf-8")
+            
+            if res_header:
+                print(res_header)
+                
             path = file_path + '/' + file_name
             
             self.create_folder_if_not_exists(file_path)
@@ -215,7 +223,7 @@ class Client():
         while True:
             try:
                 conn, addr = self.upload_socket.accept()
-                print(f'\rUpload request from {addr[0]}:{addr[1]}', flush=True)
+                print(f'\rUpload request from {addr[0]}:{addr[1]}\n', flush=True)
                 
                 upload_thread = threading.Thread(target=self.upload_file, args=(conn, addr))
                 upload_thread.start()
@@ -248,8 +256,16 @@ class Client():
             
             path = file_path + '/' + file_name
             
+            header = 'OS: %s\n' % (platform.platform())
+            header += 'Content-Length: %s\n' % (os.path.getsize(path))
+            header += 'Content-Type: %s\n' % (
+                    mimetypes.MimeTypes().guess_type(path)[0])
+            
+            print('File metadata: \n' + header)
+            
+            conn.send(header.encode())
             try:
-                print('\nUploading...')
+                print('Uploading...')
 
                 send_length = 0
                 with open(path, 'rb') as file:
@@ -290,6 +306,6 @@ if __name__ == '__main__':
     
     args = parser.parse_args()
     
-    client = Client(hostname=args.hostname, server_host='192.168.1.203')
+    client = Client(hostname=args.hostname, server_host='10.128.154.210')
     
     client.start()
