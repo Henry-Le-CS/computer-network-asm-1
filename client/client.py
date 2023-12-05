@@ -3,6 +3,7 @@ import threading
 import os
 import sys
 import argparse
+import time
 
 from client_helper import parse_client_cmd, parse_server_response, MyException
 from pathlib import Path
@@ -174,6 +175,7 @@ class Client():
         peer_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         
         try:
+            start_time = time.time()
             peer_socket.connect((host, port))
             
             message = 'DOWNLOAD_FILE\n' + file_path + '\n' + file_name
@@ -190,8 +192,10 @@ class Client():
                     data = peer_socket.recv(1024)
                 
                 f.flush()
-                    
-            print(f'\rDownloaded file {file_name} from {hostname}...', flush=True)
+            end_time = time.time()
+            
+            download_time = end_time - start_time
+            print(f'\rDownloaded file {file_name} from {hostname} in {download_time}s.', flush=True)
             
             peer_socket.close()
         except Exception as e:
