@@ -43,6 +43,7 @@ class Client():
             print(e)
             self.shutdown()
         
+        # Maybe look into this since we have already created a thread in the App class
         # Init upload to start listening for peers, as well as setting upload port
         self.init_upload_thread = threading.Thread(target=self.init_upload)
         self.init_upload_thread.start()
@@ -135,6 +136,7 @@ class Client():
         
     def check_file_exist (self, file_path, file_name):
         path = file_path + '/' + file_name
+        print(path)
         return Path(path).exists()
     
     def fetch_file_info(self, payload):
@@ -286,6 +288,6 @@ if __name__ == '__main__':
     
     args = parser.parse_args()
     
-    client = Client(hostname=args.hostname, server_host='192.168.1.203')
+    client = Client(hostname=args.hostname, server_host='192.168.1.15')
     
     client.start()
