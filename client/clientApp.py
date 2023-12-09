@@ -23,6 +23,7 @@ class App():
     self.fontXL = ctk.CTkFont('Montserrat', 24, 'bold')
 
     self.deleteLocalBtnState = 'disabled'
+    self.isFetchFileSelected = False
 
     self.init_app()
 
@@ -161,6 +162,7 @@ class App():
     self.hide_login_screen()
     self.show_main_screen()
     self.update_LocalList()
+    self.update_FetchList()
 
   def disconnect_server(self):
     restart()
@@ -197,6 +199,16 @@ class App():
     self.deleteLocalBtnState = 'disabled'
     self.renderDeleteLocalBtn()
 
+  def update_FetchList(self):
+    if self.LocalList.size():
+        self.LocalList.delete(0,'END')
+    filePath = os.path.join(os.getcwd(), REPO_PATH)
+    for fileName in os.listdir(filePath):
+        self.LocalList.insert('END',fileName)
+    
+    self.deleteLocalBtnState = 'disabled'
+    self.renderDeleteLocalBtn()
+
   def remove_local_file(self):
     fname = self.LocalList.get()
     print('removing local file', fname)
@@ -208,7 +220,7 @@ class App():
     self.DeleteLocalFileButton.place(relwidth=0.15, relheight=0.06, relx=0.05, rely=0.94, anchor=ctk.W)
 
   def renderFetchBtn(self):
-    self.FetchButton = ctk.CTkButton(self.mainFrame, text='Choose a file to fetch', command=self.fetch_file, fg_color='#CC5C70')
+    self.FetchButton = ctk.CTkButton(self.mainFrame, text='Choose a file to fetch', command=self.fetch_file, fg_color='#CC5C70', state='normal' if self.isFetchFileSelected else 'disabled')
     self.FetchButton.place(relwidth=0.34, relheight=0.05, relx=0.55, rely=0.14, anchor=ctk.W)
 
   def toggleLocalFileSelection(self, val):
@@ -218,6 +230,14 @@ class App():
     else:
       self.deleteLocalBtnState = 'normal'
     self.renderDeleteLocalBtn()
+  
+  def toggleFetchFileSelection(self, val):
+    fname = self.FetchList.get()
+    if fname == None:
+      self.isFetchFileSelected = False
+    else:
+      self.isFetchFileSelected = True
+    self.renderFetchBtn()
 
   def on_closing(self):
     print("Closing!")
@@ -228,6 +248,7 @@ class App():
     # self.terminate_flag.set()
 
     # self.client_thread.join()
+    self.client.disconnect()
     try:
         sys.exit(0)
     except SystemExit:

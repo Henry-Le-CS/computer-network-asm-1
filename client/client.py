@@ -357,6 +357,11 @@ class Client():
         message = 'GET_ALL_AVAILABLE_FILES\n'
         self.server.send(message.encode())
 
+    def disconnect(self):
+        print('[Client] removing self')
+        message = 'REMOVE_CLIENT\n'
+        self.server.send(message.encode())
+
     def shutdown(self, payload = None):
         print('\nShutting Down...')
 

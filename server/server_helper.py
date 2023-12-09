@@ -128,6 +128,10 @@ def parse_client_request (request: str, address):
         payload = address
         method = 'get_all_available_files'
 
+    elif request_method == 'REMOVE_CLIENT':
+        payload = address
+        method = 'remove_client'
+
     else:
         raise MyException('Invalid request.')
 

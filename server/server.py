@@ -271,7 +271,6 @@ class Server:
         
         self.lock.release()
         
-        
     def discover_client (self, hostname):
         files_information = []
         
