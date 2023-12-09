@@ -1,3 +1,12 @@
 *.pyc
 
 # client*
+
+# Build, dist
+*.toc
+*.pyz
+*.spec
+*.pkg
+
+build
+dist
