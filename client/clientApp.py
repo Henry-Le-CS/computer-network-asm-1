@@ -1,6 +1,7 @@
 import tkinter as tk
 import customtkinter as ctk
 from CTkListbox import *
+from tkinter import filedialog
 import sys
 import os
 import multiprocessing
@@ -156,14 +157,23 @@ class App():
     self.show_login_screen()
 
   def get_available_files(self):
-    self.client.get_available_peers()
+    self.client.get_available_files()
 
   def publish_file(self):
     print('publishing file')
-    self.get_available_files()
+    self.upload_file()
+    # self.get_available_files()
+    
 
   def fetch_file(self):
     print('fetching file')
+
+  def upload_file(self):
+    filePath = filedialog.askopenfilename()
+    lname, fname = os.path.split(filePath)
+    print('Got file path:', lname, '-', fname)
+    self.client.store_file_into_repo(lname, fname)
+    self.client.publish_file_info(('./repository', fname))
 
   def on_closing(self):
     print("Closing!")

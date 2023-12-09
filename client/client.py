@@ -3,6 +3,7 @@ import threading
 import os
 import sys
 import argparse
+import shutil
 import time
 import mimetypes
 import platform
@@ -10,11 +11,13 @@ import platform
 from client_helper import parse_client_cmd, parse_server_response, MyException
 from pathlib import Path
 
+REPO_PATH = 'repository/'
+
 class Client():
     def __init__(
         self, 
-        hostname,
-        server_host='192.168.2.189', 
+        hostname='default',
+        server_host='192.168.254.144', 
         server_port=7734, 
 
     ):
@@ -31,6 +34,10 @@ class Client():
         """
             Start the client
         """
+
+        if not os.path.exists(REPO_PATH):
+            os.makedirs(REPO_PATH)
+        
         print('Start connecting to the server on %s:%s' % (self.server_host, self.server_port))
         
         self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -73,6 +80,8 @@ class Client():
                     if(method == 'print'):
                         inputStr = 'Select option > ' if self.is_selecting_peer else '> '
                         print(data + '\n' + inputStr, end = '', flush=True)
+                    elif(method == 'list'):
+                        print('[INFO] listing:', payload)
                     # Else if the method is defined in the client, then call it
                     elif(hasattr(self, method) and callable(getattr(self, method))):
                         getattr(self, method)(payload)
@@ -120,6 +129,7 @@ class Client():
             
     def publish_file_info(self, payload):
         file_path, file_name = payload
+        print('got file path', file_path, file_name)
         
         self.create_folder_if_not_exists(file_path)
         file_exists = self.check_file_exist(file_path, file_name)
@@ -136,6 +146,20 @@ class Client():
             return
         
         Path(file_path).mkdir(parents=True, exist_ok=True)
+
+    def store_file_into_repo(self, lname, fname):
+        filePath = os.path.join(lname, fname)
+        if not os.path.exists(filePath):
+            # print('This file does not exist on your system.')
+            return('File does not exist. Please try again')
+        else:
+            if fname in os.listdir(os.path.join(os.getcwd(), REPO_PATH)):
+                return('File name already existed in repository.')
+            else:
+                shutil.copy(filePath, os.path.join(os.getcwd(), REPO_PATH))
+                print('file stored!')
+
+            
         
     def check_file_exist (self, file_path, file_name):
         path = file_path + '/' + file_name
@@ -273,6 +297,7 @@ class Client():
                 with open(path, 'rb') as file:
                     to_send = file.read(1024)
                     
+                    # Divides into packets
                     while to_send:
                         send_length += len(to_send)
                         conn.sendall(to_send)
@@ -302,6 +327,17 @@ class Client():
         message = 'FETCH_ALL_FILE_INFO\n'
         self.server.send(message.encode())
 
+    # This method is to get THE LIST of available peers as response (not as terminal's output)
+    def get_available_peers(self, payload = None):
+        print('[Client] sending get peers req')
+        message = 'GET_ALL_AVAILABLE_PEERS\n'
+        self.server.send(message.encode())
+
+    def get_available_files(self, payload = None):
+        print('[Client] sending get files req')
+        message = 'GET_ALL_AVAILABLE_FILES\n'
+        self.server.send(message.encode())
+
     def shutdown(self, payload = None):
         print('\nShutting Down...')
 
@@ -316,6 +352,6 @@ if __name__ == '__main__':
     
     args = parser.parse_args()
     
-    client = Client(hostname=args.hostname, server_host='192.168.1.15')
+    client = Client(hostname=args.hostname, server_host='192.168.254.144')
     
     client.start()
