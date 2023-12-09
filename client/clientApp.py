@@ -107,10 +107,16 @@ class App():
     self.FetchFrame.place(relwidth=0.4, relheight=0.65, relx=0.75, rely=0.55, anchor=ctk.CENTER)
 
     self.PublishButton = ctk.CTkButton(self.mainFrame, text='Choose a file to publish', command=self.publish_file, fg_color='#CC5C70')
-    self.PublishButton.place(relwidth=0.35, relheight=0.05, relx=0.25, rely=0.18, anchor=ctk.CENTER)
+    self.PublishButton.place(relwidth=0.34, relheight=0.05, relx=0.05, rely=0.18, anchor=ctk.W)
+    
+    self.RepoRefreshButton = ctk.CTkButton(self.mainFrame, text='Refresh', command=self.publish_file, fg_color='#29ADB2')
+    self.RepoRefreshButton.place(relwidth=0.05, relheight=0.05, relx=0.45, rely=0.18, anchor=ctk.E)
     
     self.FetchButton = ctk.CTkButton(self.mainFrame, text='Choose a file to fetch', command=self.fetch_file, fg_color='#CC5C70')
-    self.FetchButton.place(relwidth=0.35, relheight=0.05, relx=0.75, rely=0.18, anchor=ctk.CENTER)
+    self.FetchButton.place(relwidth=0.34, relheight=0.05, relx=0.55, rely=0.18, anchor=ctk.W)
+    
+    self.FetchRefreshButton = ctk.CTkButton(self.mainFrame, text='Refresh', command=self.publish_file, fg_color='#29ADB2')
+    self.FetchRefreshButton.place(relwidth=0.05, relheight=0.05, relx=0.95, rely=0.18, anchor=ctk.E)
 
     self.disconnect_Button = ctk.CTkButton(self.mainFrame, text='Disonnect', command=self.disconnect_server, fg_color='#CC5C70')
     self.disconnect_Button.place(relwidth=0.15, relheight=0.06, relx=0.5, rely=0.93, anchor=ctk.CENTER)
