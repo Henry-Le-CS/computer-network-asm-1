@@ -125,10 +125,7 @@ class App():
     self.disconnect_Button = ctk.CTkButton(self.mainFrame, text='Disonnect', command=self.disconnect_server, fg_color='#CC5C70')
     self.disconnect_Button.place(relwidth=0.35, relheight=0.06, relx=0.5, rely=0.94, anchor=ctk.CENTER)
 
-    self.DeleteLocalFileButton = ctk.CTkButton(self.mainFrame, text='Refresh', command=self.publish_file, fg_color='#D80032', state='disabled')
-    self.DeleteLocalFileButton.place(relwidth=0.15, relheight=0.06, relx=0.05, rely=0.94, anchor=ctk.W)
-    # self.DeleteLocalFileButton = ctk.CTkButton(self.mainFrame, text='Refresh', command=self.publish_file, fg_color='#D80032', state='disabled')
-    # self.DeleteLocalFileButton.place(relwidth=0.15, relheight=0.06, relx=0.05, rely=0.94, anchor=ctk.W)
+    self.renderDeleteLocalBtn()
 
     self.LocalList = CTkListbox(self.mainFrame, fg_color='#FED9ED', corner_radius=8, border_width=3, border_color='#CC5C70', text_color='#860A35',
                                    hover_color='#FFC0D9', font=self.fontM, select_color='#29ADB2', command=self.toggleLocalFileSelection)
@@ -177,6 +174,7 @@ class App():
   def publish_file(self):
     print('publishing file')
     self.upload_file()
+    self.update_LocalList()
     # self.get_available_files()
     
   def fetch_file(self):
@@ -195,6 +193,9 @@ class App():
     filePath = os.path.join(os.getcwd(), REPO_PATH)
     for fileName in os.listdir(filePath):
         self.LocalList.insert('END',fileName)
+    
+    self.deleteLocalBtnState = 'disabled'
+    self.renderDeleteLocalBtn()
 
   def remove_local_file(self):
     fname = self.LocalList.get()
