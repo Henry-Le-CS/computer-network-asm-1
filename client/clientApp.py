@@ -1,29 +1,48 @@
 import tkinter as tk
 import customtkinter as ctk
+from CTkListbox import *
 import sys
 import os
 import multiprocessing
 import threading
+
+import subprocess
 
 from client import Client
 
 class App():
   def __init__(self):
     self.app = ctk.CTk()
+
+    self.fontS = ctk.CTkFont('Montserrat', 12)
+    self.fontM = ctk.CTkFont('Montserrat', 16)
+    self.fontL = ctk.CTkFont('Montserrat', 18, 'bold')
+    self.fontXL = ctk.CTkFont('Montserrat', 24, 'bold')
+
     self.init_app()
 
     # Starting client logic
     # Hardcoded params first...
     
-
     self.show_login_screen()
+
 
     
 
   def init_app(self):
     self.app.title("Client App")
-    self.app.geometry("500x500+300+100")
-    self.app.resizable(False, True)
+
+    WINDOW_WIDTH = 1280
+    WINDOW_HEIGHT = 720
+
+    SCREEN_WIDTH = self.app.winfo_screenwidth()
+    SCREEN_HEIGHT = self.app.winfo_screenheight()
+
+    X_OFFSET = (SCREEN_WIDTH/2) - (WINDOW_WIDTH/2)
+    Y_OFFSET = (SCREEN_HEIGHT/2) - (WINDOW_HEIGHT/2)
+
+    self.app.geometry('%dx%d+%d+%d' % (WINDOW_WIDTH, WINDOW_HEIGHT, X_OFFSET, Y_OFFSET))
+    # self.app.resizable(False, True)
     self.app.config(bg = "#474040")
 
     self.setup_frames()
@@ -34,21 +53,21 @@ class App():
     self.app.protocol("WM_DELETE_WINDOW", self.on_closing)
 
   def setup_frames(self):
-    self.signInFrame = ctk.CTkFrame(self.app, 700, 400, fg_color='#b3cccc', corner_radius=0)
-    self.mainFrame = ctk.CTkFrame(self.app, 700, 400, fg_color='#f4cccc', corner_radius=0)
+    self.signInFrame = ctk.CTkFrame(self.app, 1024, 720, fg_color='#b3cccc', corner_radius=0)
+    self.mainFrame = ctk.CTkFrame(self.app, 1024, 720, fg_color='#67729D', corner_radius=0)
 
   def show_login_screen(self):
-    self.signInFrame.place(relwidth=0.96, relheight=0.96, relx=0.5, rely=0.5, anchor=ctk.CENTER)
+    self.signInFrame.place(relwidth=1, relheight=1, relx=0.5, rely=0.5, anchor=ctk.CENTER)
 
     self.EntryFrame = ctk.CTkFrame(self.signInFrame, 350, 200, fg_color='#b3cccc', corner_radius=15, border_width=2, border_color='white')
-    self.AppTitleLogin = ctk.CTkLabel(self.signInFrame, text='File-Sharing Application',
+    self.AppTitleLogin = ctk.CTkLabel(self.signInFrame, text='File-Sharing Application', font=self.fontXL,
                                   text_color='black', corner_radius=15)
     self.AppIcon = ctk.CTkLabel(self.signInFrame, 70, 70, fg_color='#75a3a3', text='', corner_radius=15)
-    self.ServerIPLabel = ctk.CTkLabel(self.signInFrame, 100, 30, text='SERVER IP', 
+    self.ServerIPLabel = ctk.CTkLabel(self.signInFrame, 100, 30, text='SERVER IP', font=self.fontL, 
                                       text_color='black')
     self.ServerIPEntry = ctk.CTkEntry(self.signInFrame, 200, 30,
                                 corner_radius=10, placeholder_text='Server IP', text_color='white')
-    self.HostnameLabel = ctk.CTkLabel(self.signInFrame, 100, 30, text='HOSTNAME',
+    self.HostnameLabel = ctk.CTkLabel(self.signInFrame, 100, 30, text='HOSTNAME', font=self.fontL,
                                       text_color='black')
     self.HostnameEntry = ctk.CTkEntry(self.signInFrame, 200, 30,
                                 corner_radius=10, placeholder_text='Hostname', text_color='white')
@@ -73,9 +92,35 @@ class App():
     self.mainFrame.place_forget()
   
   def show_main_screen(self):
-    self.mainFrame.place(relwidth=0.96, relheight=0.96, relx=0.5, rely=0.5, anchor=ctk.CENTER)
-    self.disconnect_Button = ctk.CTkButton(self.mainFrame, text='Disonnect', command=self.disconnect_server, fg_color='#3d5c5c')
-    self.disconnect_Button.place(relwidth=0.15, relheight=0.06, relx=0.5, rely=0.85, anchor=ctk.CENTER)
+    self.mainFrame.place(relwidth=1, relheight=1, relx=0.5, rely=0.5, anchor=ctk.CENTER)
+
+    self.PublishLabel = ctk.CTkLabel(self.mainFrame, text='Publish a file to server', fg_color='#FED9ED', text_color='black', font=self.fontXL, corner_radius=8)
+    self.PublishLabel.place(relwidth = 0.4, relheight=0.06, relx=0.25, rely=0.05, anchor=ctk.CENTER)
+
+    self.FetchLabel = ctk.CTkLabel(self.mainFrame, text='Fetch a file from another peer', fg_color='#FED9ED', text_color='black', font=self.fontXL, corner_radius=8)
+    self.FetchLabel.place(relwidth = 0.4, relheight=0.06, relx=0.75, rely=0.05, anchor=ctk.CENTER)
+
+    self.PublishFrame = ctk.CTkFrame(self.mainFrame, 350, 120, fg_color='#FED9ED', corner_radius=8)
+    self.PublishFrame.place(relwidth=0.4, relheight=0.65, relx=0.25, rely=0.55, anchor=ctk.CENTER)
+    
+    self.FetchFrame = ctk.CTkFrame(self.mainFrame, 350, 120, fg_color='#FED9ED', corner_radius=8)
+    self.FetchFrame.place(relwidth=0.4, relheight=0.65, relx=0.75, rely=0.55, anchor=ctk.CENTER)
+
+    self.PublishButton = ctk.CTkButton(self.mainFrame, text='Choose a file to publish', command=self.publish_file, fg_color='#CC5C70')
+    self.PublishButton.place(relwidth=0.35, relheight=0.05, relx=0.25, rely=0.18, anchor=ctk.CENTER)
+    
+    self.FetchButton = ctk.CTkButton(self.mainFrame, text='Choose a file to fetch', command=self.fetch_file, fg_color='#CC5C70')
+    self.FetchButton.place(relwidth=0.35, relheight=0.05, relx=0.75, rely=0.18, anchor=ctk.CENTER)
+
+    self.disconnect_Button = ctk.CTkButton(self.mainFrame, text='Disonnect', command=self.disconnect_server, fg_color='#CC5C70')
+    self.disconnect_Button.place(relwidth=0.15, relheight=0.06, relx=0.5, rely=0.93, anchor=ctk.CENTER)
+
+    # Upload btn
+
+    # List of avail files
+    # - Should have a button to download them
+
+    # List of uploaded files (low prio)
 
   def connect_server(self):
     serverIP = self.ServerIPEntry.get()
@@ -84,7 +129,7 @@ class App():
 
     if not serverIP or not hostname:
       # Handle empty fields
-      self.WarningLabel = ctk.CTkLabel(self.signInFrame, text='Please enter both Server IP and Hostname.',
+      self.WarningLabel = ctk.CTkLabel(self.signInFrame, text='Please enter both Server IP and Hostname.', font=self.fontM,
                                         text_color='red')
       self.WarningLabel.place(relx=0.5, rely=0.75, anchor=ctk.CENTER)
       self.WarningLabel.after(2000, lambda: self.WarningLabel.place_forget())
@@ -103,6 +148,16 @@ class App():
     
     self.hide_main_screen()
     self.show_login_screen()
+
+  def get_available_files(self):
+    self.client.get_available_peers()
+
+  def publish_file(self):
+    print('publishing file')
+    self.get_available_files()
+
+  def fetch_file(self):
+    print('fetching file')
 
   def on_closing(self):
     print("Closing!")
