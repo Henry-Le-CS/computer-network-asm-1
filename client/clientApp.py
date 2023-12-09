@@ -11,6 +11,8 @@ import subprocess
 
 from client import Client
 
+REPO_PATH = 'repository/'
+
 class App():
   def __init__(self):
     self.app = ctk.CTk()
@@ -19,6 +21,8 @@ class App():
     self.fontM = ctk.CTkFont('Montserrat', 16)
     self.fontL = ctk.CTkFont('Montserrat', 18, 'bold')
     self.fontXL = ctk.CTkFont('Montserrat', 24, 'bold')
+
+    self.deleteLocalBtnState = 'disabled'
 
     self.init_app()
 
@@ -95,33 +99,44 @@ class App():
   def show_main_screen(self):
     self.mainFrame.place(relwidth=1, relheight=1, relx=0.5, rely=0.5, anchor=ctk.CENTER)
 
-    self.PublishLabel = ctk.CTkLabel(self.mainFrame, text='Publish a file to server', fg_color='#FED9ED', text_color='black', font=self.fontXL, corner_radius=8)
-    self.PublishLabel.place(relwidth = 0.4, relheight=0.06, relx=0.25, rely=0.05, anchor=ctk.CENTER)
+    self.PublishLabel = ctk.CTkLabel(self.mainFrame, text='Publish a file to server', fg_color='#FED9ED', text_color='#860A35', font=self.fontXL, corner_radius=8)
+    self.PublishLabel.place(relwidth = 0.4, relheight=0.06, relx=0.25, rely=0.07, anchor=ctk.CENTER)
 
-    self.FetchLabel = ctk.CTkLabel(self.mainFrame, text='Fetch a file from another peer', fg_color='#FED9ED', text_color='black', font=self.fontXL, corner_radius=8)
-    self.FetchLabel.place(relwidth = 0.4, relheight=0.06, relx=0.75, rely=0.05, anchor=ctk.CENTER)
+    self.FetchLabel = ctk.CTkLabel(self.mainFrame, text='Fetch a file from another peer', fg_color='#FED9ED', text_color='#860A35', font=self.fontXL, corner_radius=8)
+    self.FetchLabel.place(relwidth = 0.4, relheight=0.06, relx=0.75, rely=0.07, anchor=ctk.CENTER)
 
-    self.PublishFrame = ctk.CTkFrame(self.mainFrame, 350, 120, fg_color='#FED9ED', corner_radius=8)
-    self.PublishFrame.place(relwidth=0.4, relheight=0.65, relx=0.25, rely=0.55, anchor=ctk.CENTER)
+    # self.PublishFrame = ctk.CTkFrame(self.mainFrame, 350, 120, fg_color='#FED9ED', corner_radius=8)
+    # self.PublishFrame.place(relwidth=0.4, relheight=0.65, relx=0.25, rely=0.55, anchor=ctk.CENTER)
     
-    self.FetchFrame = ctk.CTkFrame(self.mainFrame, 350, 120, fg_color='#FED9ED', corner_radius=8)
-    self.FetchFrame.place(relwidth=0.4, relheight=0.65, relx=0.75, rely=0.55, anchor=ctk.CENTER)
+    # self.FetchFrame = ctk.CTkFrame(self.mainFrame, 350, 120, fg_color='#FED9ED', corner_radius=8)
+    # self.FetchFrame.place(relwidth=0.4, relheight=0.65, relx=0.75, rely=0.55, anchor=ctk.CENTER)
 
     self.PublishButton = ctk.CTkButton(self.mainFrame, text='Choose a file to publish', command=self.publish_file, fg_color='#CC5C70')
-    self.PublishButton.place(relwidth=0.34, relheight=0.05, relx=0.05, rely=0.18, anchor=ctk.W)
+    self.PublishButton.place(relwidth=0.34, relheight=0.05, relx=0.05, rely=0.14, anchor=ctk.W)
     
-    self.RepoRefreshButton = ctk.CTkButton(self.mainFrame, text='Refresh', command=self.publish_file, fg_color='#29ADB2')
-    self.RepoRefreshButton.place(relwidth=0.05, relheight=0.05, relx=0.45, rely=0.18, anchor=ctk.E)
+    self.RepoRefreshButton = ctk.CTkButton(self.mainFrame, text='Refresh', command=self.update_LocalList, fg_color='#29ADB2')
+    self.RepoRefreshButton.place(relwidth=0.05, relheight=0.05, relx=0.45, rely=0.14, anchor=ctk.E)
     
-    self.FetchButton = ctk.CTkButton(self.mainFrame, text='Choose a file to fetch', command=self.fetch_file, fg_color='#CC5C70')
-    self.FetchButton.place(relwidth=0.34, relheight=0.05, relx=0.55, rely=0.18, anchor=ctk.W)
+    self.renderFetchBtn()
     
     self.FetchRefreshButton = ctk.CTkButton(self.mainFrame, text='Refresh', command=self.publish_file, fg_color='#29ADB2')
-    self.FetchRefreshButton.place(relwidth=0.05, relheight=0.05, relx=0.95, rely=0.18, anchor=ctk.E)
+    self.FetchRefreshButton.place(relwidth=0.05, relheight=0.05, relx=0.95, rely=0.14, anchor=ctk.E)
 
     self.disconnect_Button = ctk.CTkButton(self.mainFrame, text='Disonnect', command=self.disconnect_server, fg_color='#CC5C70')
-    self.disconnect_Button.place(relwidth=0.15, relheight=0.06, relx=0.5, rely=0.93, anchor=ctk.CENTER)
+    self.disconnect_Button.place(relwidth=0.35, relheight=0.06, relx=0.5, rely=0.94, anchor=ctk.CENTER)
 
+    self.DeleteLocalFileButton = ctk.CTkButton(self.mainFrame, text='Refresh', command=self.publish_file, fg_color='#D80032', state='disabled')
+    self.DeleteLocalFileButton.place(relwidth=0.15, relheight=0.06, relx=0.05, rely=0.94, anchor=ctk.W)
+    # self.DeleteLocalFileButton = ctk.CTkButton(self.mainFrame, text='Refresh', command=self.publish_file, fg_color='#D80032', state='disabled')
+    # self.DeleteLocalFileButton.place(relwidth=0.15, relheight=0.06, relx=0.05, rely=0.94, anchor=ctk.W)
+
+    self.LocalList = CTkListbox(self.mainFrame, fg_color='#FED9ED', corner_radius=8, border_width=3, border_color='#CC5C70', text_color='#860A35',
+                                   hover_color='#FFC0D9', font=self.fontM, select_color='#29ADB2', command=self.toggleLocalFileSelection)
+    self.LocalList.place(relwidth=0.4, relheight=0.7, relx=0.25, rely=0.18, anchor=ctk.N)                               
+    
+    self.FetchList = CTkListbox(self.mainFrame, fg_color='#FED9ED', corner_radius=8, border_width=3, border_color='#CC5C70', text_color='#860A35',
+                                   hover_color='#FFC0D9', font=self.fontM, select_color='#29ADB2')
+    self.FetchList.place(relwidth=0.4, relheight=0.7, relx=0.75, rely=0.18, anchor=ctk.N)                               
     # Upload btn
 
     # List of avail files
@@ -146,9 +161,9 @@ class App():
     self.client_thread = threading.Thread(target=self.client.start,daemon=True)
     self.client_thread.start()
 
-    
     self.hide_login_screen()
     self.show_main_screen()
+    self.update_LocalList()
 
   def disconnect_server(self):
     restart()
@@ -164,7 +179,6 @@ class App():
     self.upload_file()
     # self.get_available_files()
     
-
   def fetch_file(self):
     print('fetching file')
 
@@ -174,6 +188,35 @@ class App():
     print('Got file path:', lname, '-', fname)
     self.client.store_file_into_repo(lname, fname)
     self.client.publish_file_info(('./repository', fname))
+
+  def update_LocalList(self):
+    if self.LocalList.size():
+        self.LocalList.delete(0,'END')
+    filePath = os.path.join(os.getcwd(), REPO_PATH)
+    for fileName in os.listdir(filePath):
+        self.LocalList.insert('END',fileName)
+
+  def remove_local_file(self):
+    fname = self.LocalList.get()
+    print('removing local file', fname)
+    self.client.remove_local_file(('./repository', fname))
+    self.LocalList.delete(self.LocalList.curselection())
+
+  def renderDeleteLocalBtn(self):
+    self.DeleteLocalFileButton = ctk.CTkButton(self.mainFrame, text='Delete Local', command=self.remove_local_file, fg_color='#D80032', state=self.deleteLocalBtnState)
+    self.DeleteLocalFileButton.place(relwidth=0.15, relheight=0.06, relx=0.05, rely=0.94, anchor=ctk.W)
+
+  def renderFetchBtn(self):
+    self.FetchButton = ctk.CTkButton(self.mainFrame, text='Choose a file to fetch', command=self.fetch_file, fg_color='#CC5C70')
+    self.FetchButton.place(relwidth=0.34, relheight=0.05, relx=0.55, rely=0.14, anchor=ctk.W)
+
+  def toggleLocalFileSelection(self, val):
+    fname = self.LocalList.get()
+    if fname == None:
+      self.deleteLocalBtnState = 'disabled'
+    else:
+      self.deleteLocalBtnState = 'normal'
+    self.renderDeleteLocalBtn()
 
   def on_closing(self):
     print("Closing!")
@@ -189,7 +232,7 @@ class App():
     except SystemExit:
         os._exit(0)
     # self.client.shutdown()
-
+  
 def restart():
   print('Restarting process')
 

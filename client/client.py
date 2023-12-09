@@ -177,6 +177,14 @@ class Client():
         message = 'INIT_PUBLISH\n' + './' + REPO_PATH + '\n' + ':'.join(files) + '\n' + str(self.upload_port)
         self.server.send(message.encode())
     
+    def remove_local_file(self, payload):
+        file_path, file_name = payload
+        print('[Client - Delete local file] got file path', file_path, file_name)
+        os.remove(os.path.join(file_path, file_name))
+
+        message = 'REMOVE_LOCAL_FILE\n' + file_path + '\n' + file_name + '\n' + str(self.upload_port)
+        self.server.send(message.encode())
+    
     def fetch_file_info(self, payload):
         file_name = payload
         
@@ -272,7 +280,7 @@ class Client():
                 self.shutdown()
                 break
         self.upload_socket.close()
-            
+
     def upload_file(self, conn: socket.socket , addr):
         try:
             data = conn.recv(1024).decode("utf-8")
