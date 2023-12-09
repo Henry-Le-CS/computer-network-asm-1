@@ -63,6 +63,14 @@ def parse_client_cmd (command: str, is_selecting_peer: bool = False, peer_option
         elif target.lower() == 'files':
             method = 'list_files'
 
+    elif keyword.lower() == 'get':
+        target = splitted_command[1]
+        
+        if target.lower() == 'peers':
+            method = 'get_available_peers'
+        # elif target.lower() == 'files':
+        #     method = 'list_files'
+
     elif is_selecting_peer:
         validate_length(command, 1)
         
@@ -103,6 +111,9 @@ def parse_server_response(response: str):
             
         payload = (file_name, options)
         method = 'display_peer_options'
+    elif keyword.lower() == 'list':
+        payload = splitted_res
+        method = 'list'
     else:
         method = 'print'
     return method, payload
