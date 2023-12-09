@@ -253,6 +253,25 @@ class Server:
 
         print('[Server] pre-publishing with', files, file_path, uploader_address)
         
+    def remove_local_file(self, payload):
+        print ('[Server - Delete] running')
+        # return
+        self.lock.acquire()
+        file_name, file_path, uploader_address = payload
+
+        if not self.file_references.keys().__contains__(file_name):
+            print('Print not even existed, returning')
+            return
+
+        for client_address, file_path in self.file_references[file_name]:
+            if path == file_path and client_address == uploader_address:
+                print('found match, removing')
+                self.file_references[file_name].remove((uploader_address, file_path))
+                return
+        
+        self.lock.release()
+        
+        
     def discover_client (self, hostname):
         files_information = []
         

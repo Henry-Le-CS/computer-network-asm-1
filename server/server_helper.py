@@ -90,6 +90,19 @@ def parse_client_request (request: str, address):
         
         payload = (files, file_path, address)
         method = 'init_publish'
+
+    elif request_method == 'REMOVE_LOCAL_FILE':
+        validate_length(request, 4, delimiter=delimiter) # keyword, file_name, file_path, upload_port
+        
+        file_path = splitted_command[1]
+        file_name = splitted_command[2]
+        upload_port = splitted_command[3]
+        
+        address = (address[0], upload_port)
+        
+        payload = (file_name, file_path, address)
+        method = 'remove_local_file'
+        
     
     elif request_method == 'FETCH_FILE_INFO':
         validate_length(request, 2, delimiter=delimiter) # keyword, file_name
