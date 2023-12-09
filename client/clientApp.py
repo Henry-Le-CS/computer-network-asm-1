@@ -1,6 +1,7 @@
 import tkinter as tk
 import customtkinter as ctk
 import sys
+import os
 import multiprocessing
 import threading
 
@@ -11,10 +12,9 @@ class App():
     self.app = ctk.CTk()
     self.init_app()
 
+    # Starting client logic
     # Hardcoded params first...
-    self.client = Client(hostname='hihihehe', server_host='192.168.254.144')
-    self.client_thread = threading.Thread(target=self.client.start,daemon=True)
-    self.client_thread.start()
+    
 
     self.show_login_screen()
 
@@ -78,10 +78,29 @@ class App():
     self.disconnect_Button.place(relwidth=0.15, relheight=0.06, relx=0.5, rely=0.85, anchor=ctk.CENTER)
 
   def connect_server(self):
+    serverIP = self.ServerIPEntry.get()
+    hostname = self.HostnameEntry.get()
+    print('got inputs', serverIP, hostname)
+
+    if not serverIP or not hostname:
+      # Handle empty fields
+      self.WarningLabel = ctk.CTkLabel(self.signInFrame, text='Please enter both Server IP and Hostname.',
+                                        text_color='red')
+      self.WarningLabel.place(relx=0.5, rely=0.75, anchor=ctk.CENTER)
+      self.WarningLabel.after(2000, lambda: self.WarningLabel.place_forget())
+      return
+
+    self.client = Client(hostname=hostname, server_host=serverIP)
+    self.client_thread = threading.Thread(target=self.client.start,daemon=True)
+    self.client_thread.start()
+
+    
     self.hide_login_screen()
     self.show_main_screen()
 
   def disconnect_server(self):
+    restart()
+    
     self.hide_main_screen()
     self.show_login_screen()
 
@@ -94,7 +113,16 @@ class App():
     # self.terminate_flag.set()
 
     # self.client_thread.join()
-    sys.exit()
+    try:
+        sys.exit(0)
+    except SystemExit:
+        os._exit(0)
+    # self.client.shutdown()
+
+def restart():
+  print('Restarting process')
+
+  os.execv(sys.executable, ['python'] + sys.argv)
 
 if __name__ == "__main__":
   # if not os.path.exists(downloads_folder):
