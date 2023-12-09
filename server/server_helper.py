@@ -78,6 +78,18 @@ def parse_client_request (request: str, address):
         
         payload = (file_name, file_path, address)
         method = 'publish_filename'
+        
+    elif request_method == 'INIT_PUBLISH':
+        validate_length(request, 4, delimiter=delimiter) # keyword, file_name, file_path, upload_port
+        
+        file_path = splitted_command[1]
+        files = splitted_command[2]
+        upload_port = splitted_command[3]
+        
+        address = (address[0], upload_port)
+        
+        payload = (files, file_path, address)
+        method = 'init_publish'
     
     elif request_method == 'FETCH_FILE_INFO':
         validate_length(request, 2, delimiter=delimiter) # keyword, file_name

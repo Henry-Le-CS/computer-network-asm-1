@@ -221,6 +221,7 @@ class Server:
         self.lock.acquire()
         
         file_name, file_path, uploader_address = payload
+        print('[Server] publishing', file_name, file_path)
         
         # Work around: file_path will be destructured from self.file_references[file_name]. So we need a cloned variable
         path = file_path
@@ -236,6 +237,21 @@ class Server:
         self.file_references[file_name].append((uploader_address, path))
         
         self.lock.release()
+
+    def init_publish(self, payload):
+        files, file_path, uploader_address = payload
+        splitted_files = files.split(':')
+
+        # Debugging
+        i = 0
+        for file in splitted_files:
+            print('- ', i, file)
+            i += 1
+
+        for file in splitted_files:
+            self.publish_filename((file, file_path, uploader_address))
+
+        print('[Server] pre-publishing with', files, file_path, uploader_address)
         
     def discover_client (self, hostname):
         files_information = []

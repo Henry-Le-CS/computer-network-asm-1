@@ -63,7 +63,7 @@ class Client():
             pass
         
         self.set_host_addresses()
-        
+        self.init_publish()
         print(f'Start listening for peers on port {self.upload_port}')
         
         # Start a new thread for cli
@@ -159,12 +159,23 @@ class Client():
                 shutil.copy(filePath, os.path.join(os.getcwd(), REPO_PATH))
                 print('file stored!')
 
-            
-        
     def check_file_exist (self, file_path, file_name):
         path = file_path + '/' + file_name
         print(path)
         return Path(path).exists()
+    
+    # This method is run right after the connection to server is made
+    def init_publish(self):
+        filePath = os.path.join(os.getcwd(), REPO_PATH)
+        files = []
+
+        for file in os.listdir(filePath):
+            files.append(file)
+
+        print('[Client] pre-publishing with', files)
+
+        message = 'INIT_PUBLISH\n' + './' + REPO_PATH + '\n' + ':'.join(files) + '\n' + str(self.upload_port)
+        self.server.send(message.encode())
     
     def fetch_file_info(self, payload):
         file_name = payload

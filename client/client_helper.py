@@ -68,8 +68,8 @@ def parse_client_cmd (command: str, is_selecting_peer: bool = False, peer_option
         
         if target.lower() == 'peers':
             method = 'get_available_peers'
-        # elif target.lower() == 'files':
-        #     method = 'list_files'
+        elif target.lower() == 'files':
+            method = 'get_available_files'
 
     elif is_selecting_peer:
         validate_length(command, 1)
