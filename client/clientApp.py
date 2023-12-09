@@ -1,6 +1,7 @@
 import tkinter as tk
 import sys
 import multiprocessing
+import threading
 
 from client import Client
 
@@ -17,8 +18,8 @@ class App(tk.Tk):
     self.frame.pack(side = tk.TOP, fill = tk.BOTH)
 
     # Hardcoded params first...
-    self.client = Client(hostname='hihihehe', server_host='192.168.1.15')
-    self.client_thread = multiprocessing.Process(target=self.client.start)
+    self.client = Client(hostname='hihihehe', server_host='192.168.254.144')
+    self.client_thread = threading.Thread(target=self.client.start)
     self.client_thread.start()
 
     self.protocol("WM_DELETE_WINDOW", self.on_closing)
