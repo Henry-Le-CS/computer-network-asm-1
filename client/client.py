@@ -3,6 +3,9 @@ import threading
 import os
 import sys
 import argparse
+import time
+import mimetypes
+import platform
 
 from client_helper import parse_client_cmd, parse_server_response, MyException
 from pathlib import Path
@@ -171,16 +174,23 @@ class Client():
         
         port = int(port)
         
-        print(f'\rDownloading file {file_name} from {hostname}...', flush=True)
+        print(f'\rDownloading file {file_name} from {hostname}...\n', flush=True)
         
         peer_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         
         try:
+            start_time = time.time()
             peer_socket.connect((host, port))
+
             
             message = 'DOWNLOAD_FILE\n' + file_path + '\n' + file_name
             peer_socket.send(message.encode())
             
+            res_header = peer_socket.recv(1024).decode("utf-8")
+            
+            if res_header:
+                print(res_header)
+                
             path = file_path + '/' + file_name
             
             self.create_folder_if_not_exists(file_path)
@@ -192,8 +202,10 @@ class Client():
                     data = peer_socket.recv(1024)
                 
                 f.flush()
-                    
-            print(f'\rDownloaded file {file_name} from {hostname}...', flush=True)
+            end_time = time.time()
+            
+            download_time = end_time - start_time
+            print(f'\rDownloaded file {file_name} from {hostname} in {download_time}s.', flush=True)
             
             peer_socket.close()
         except Exception as e:
@@ -213,7 +225,7 @@ class Client():
         while True:
             try:
                 conn, addr = self.upload_socket.accept()
-                print(f'\rUpload request from {addr[0]}:{addr[1]}', flush=True)
+                print(f'\rUpload request from {addr[0]}:{addr[1]}\n', flush=True)
                 
                 upload_thread = threading.Thread(target=self.upload_file, args=(conn, addr))
                 upload_thread.start()
@@ -246,8 +258,16 @@ class Client():
             
             path = file_path + '/' + file_name
             
+            header = 'OS: %s\n' % (platform.platform())
+            header += 'Content-Length: %s\n' % (os.path.getsize(path))
+            header += 'Content-Type: %s\n' % (
+                    mimetypes.MimeTypes().guess_type(path)[0])
+            
+            print('File metadata: \n' + header)
+            
+            conn.send(header.encode())
             try:
-                print('\nUploading...')
+                print('Uploading...')
 
                 send_length = 0
                 with open(path, 'rb') as file:
@@ -273,6 +293,14 @@ class Client():
             self.shutdown()
         finally:
             conn.close()
+
+    def list_peers(self, payload = None):
+        message = 'FETCH_AVAILABLE_PEERS\n'
+        self.server.send(message.encode())
+        
+    def list_files(self, payload = None):
+        message = 'FETCH_ALL_FILE_INFO\n'
+        self.server.send(message.encode())
 
     def shutdown(self, payload = None):
         print('\nShutting Down...')

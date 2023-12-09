@@ -282,7 +282,12 @@ class Server:
         res.append(file_name)
         
         for uploader_address, file_path in self.file_references[file_name]:
-            if self.isCurrentClient(address=address, uploader_address=uploader_address):
+            is_client_fetching_itself = self.isCurrentClient(
+                                            address=address, 
+                                            uploader_address=uploader_address
+                                        )
+            
+            if is_client_fetching_itself:
                 continue
             
             client_name = self.get_client_name(uploader_address)
@@ -370,7 +375,64 @@ class Server:
         except SystemExit:
             os._exit(0)       
 
+    def fetch_available_peers(self, payload):
+        client_address = payload
+        client_soc = self.client_socket_lists[client_address]
+        
+        peers = []
+        index = 1
+        # hostname, host, port, upload_port
+        for client_name, client_addresses in self.client_name_lists.items():
+            uploader_address = (client_addresses['host'], str(client_addresses['upload_port']))
+            
+            is_client_fetching_itself = self.isCurrentClient(
+                                            address=client_address, 
+                                            uploader_address=uploader_address
+                                        )
+            
+            if is_client_fetching_itself:
+                continue
+            
+            peers.append(f'\n{index}) Hostname: {client_name}, IP: {client_addresses["host"]}, Port: {client_addresses["port"]}, Upload port: {client_addresses["upload_port"]}\n')
+            index += 1
+        
+        if len(peers) == 0:
+            client_soc.sendall('No fetchable peer is available.'.encode())
+            return
+        
+        message = '\n'.join(peers)
+        client_soc.sendall(message.encode())
+    
+    def fetch_all_available_files(self, payload):
+        client_address = payload
+        client_soc = self.client_socket_lists[client_address]
+        
+        files = []
+        index = 1
+        
+        for file_name, file_references in self.file_references.items():
+            for uploader_address, file_path in file_references:
+                
+                is_client_fetching_itself = self.isCurrentClient(
+                                                address=client_address, 
+                                                uploader_address=uploader_address
+                                            )
+                
+                if is_client_fetching_itself:
+                    continue
+                
+                client_name = self.get_client_name(uploader_address)
+                files.append(f'{index}) File name: {file_name}, File path: {file_path}, Host: {client_name}, IP: {uploader_address[0]}, Upload port: {uploader_address[1]}')
+                index += 1
+        
+        if len(files) == 0:
+            client_soc.sendall('No fetchable file is available on other peer.'.encode())
+            return
+        
+        message = '\n'.join(files)
+        client_soc.sendall(message.encode())
+        
 if __name__ == '__main__':
-    server = Server(server_host='192.168.1.203')
+    server = Server(server_host='10.128.154.210')
 
     server.start()
