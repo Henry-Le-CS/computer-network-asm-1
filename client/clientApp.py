@@ -32,9 +32,6 @@ class App():
     
     self.show_login_screen()
 
-
-    
-
   def init_app(self):
     self.app.title("Client App")
 
@@ -106,6 +103,9 @@ class App():
     self.FetchLabel = ctk.CTkLabel(self.mainFrame, text='Fetch a file from another peer', fg_color='#FED9ED', text_color='#860A35', font=self.fontXL, corner_radius=8)
     self.FetchLabel.place(relwidth = 0.4, relheight=0.06, relx=0.75, rely=0.07, anchor=ctk.CENTER)
 
+    self.PeerLabel = ctk.CTkLabel(self.mainFrame, text='Select a peer to fetch', fg_color='#FED9ED', text_color='#860A35', font=self.fontXL, corner_radius=8)
+    self.PeerLabel.place(relwidth = 0.4, relheight=0.06, relx=0.75, rely=0.585, anchor=ctk.CENTER)
+
     # self.PublishFrame = ctk.CTkFrame(self.mainFrame, 350, 120, fg_color='#FED9ED', corner_radius=8)
     # self.PublishFrame.place(relwidth=0.4, relheight=0.65, relx=0.25, rely=0.55, anchor=ctk.CENTER)
     
@@ -134,13 +134,11 @@ class App():
     
     self.FetchList = CTkListbox(self.mainFrame, fg_color='#FED9ED', corner_radius=8, border_width=3, border_color='#CC5C70', text_color='#860A35',
                                    hover_color='#FFC0D9', font=self.fontM, select_color='#29ADB2')
-    self.FetchList.place(relwidth=0.4, relheight=0.7, relx=0.75, rely=0.18, anchor=ctk.N)                               
-    # Upload btn
+    self.FetchList.place(relwidth=0.4, relheight=0.36, relx=0.75, rely=0.18, anchor=ctk.N)                               
 
-    # List of avail files
-    # - Should have a button to download them
-
-    # List of uploaded files (low prio)
+    self.PeerList = CTkListbox(self.mainFrame, fg_color='#FED9ED', corner_radius=8, border_width=3, border_color='#CC5C70', text_color='#860A35',
+                                   hover_color='#FFC0D9', font=self.fontM, select_color='#29ADB2')
+    self.PeerList.place(relwidth=0.4, relheight=0.25, relx=0.75, rely=0.63, anchor=ctk.N)                               
 
   def connect_server(self):
     serverIP = self.ServerIPEntry.get()
@@ -208,6 +206,9 @@ class App():
     
     self.deleteLocalBtnState = 'disabled'
     self.renderDeleteLocalBtn()
+
+  # def update_PeerList(self):
+
 
   def remove_local_file(self):
     fname = self.LocalList.get()

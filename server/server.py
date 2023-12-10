@@ -254,7 +254,6 @@ class Server:
         print('[Server] pre-publishing with', files, file_path, uploader_address)
         
     def remove_local_file(self, payload):
-        print ('[Server - Delete] running')
         # return
         self.lock.acquire()
         file_name, file_path, uploader_address = payload
@@ -263,10 +262,10 @@ class Server:
             print('Print not even existed, returning')
             return
 
-        for client_address, file_path in self.file_references[file_name]:
-            if path == file_path and client_address == uploader_address:
+        for client_address, fpath in self.file_references[file_name]:
+            if file_path == fpath and client_address == uploader_address:
                 print('found match, removing')
-                self.file_references[file_name].remove((uploader_address, file_path))
+                self.file_references[file_name].remove((uploader_address, fpath))
                 return
         
         self.lock.release()
@@ -527,6 +526,6 @@ class Server:
 
         
 if __name__ == '__main__':
-    server = Server(server_host='192.168.254.144')
+    server = Server(server_host='192.168.1.11')
 
     server.start()
