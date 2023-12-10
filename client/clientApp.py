@@ -141,7 +141,7 @@ class App():
                                    hover_color='#FFC0D9', font=self.fontM, select_color='#29ADB2')
     self.PeerList.place(relwidth=0.4, relheight=0.25, relx=0.75, rely=0.63, anchor=ctk.N)                               
 
-    # self.get_available_files()
+    
 
   def connect_server(self):
     serverIP = self.ServerIPEntry.get()
@@ -164,6 +164,7 @@ class App():
     self.show_main_screen()
     # self.client.get_all_available_files()
     self.update_Lists()
+    self.get_available_files()
     # self.update_LocalList()
     # self.update_FetchList()
 
@@ -243,9 +244,9 @@ class App():
     if self.FetchList.size() > 0:
       self.FetchList.delete(0, 'END')
 
-    if len(self.client.remoteFiles) == 0:
-      self.client.get_available_files()
-      return
+    # if len(self.client.remoteFiles) == 0:
+    #   self.client.get_available_files()
+    #   return
 
     for file in self.client.remoteFiles:
       print('adding ', file)
