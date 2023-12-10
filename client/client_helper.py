@@ -117,6 +117,9 @@ def parse_server_response(response: str):
     elif keyword.lower() == 'set_available_files':
         payload = splitted_res
         method = 'set_available_files'
+    elif keyword.lower() == 'set_peers':
+        payload = splitted_res
+        method = 'set_peers'
     else:
         method = 'print'
     return method, payload
