@@ -129,7 +129,11 @@ def parse_client_request (request: str, address):
         method = 'get_all_available_files'
 
     elif request_method == 'REMOVE_CLIENT':
+        upload_port = splitted_command[1]
+
         payload = address
+        # payload = address
+        print('[Parser] payload', payload)
         method = 'remove_client'
 
     else:
