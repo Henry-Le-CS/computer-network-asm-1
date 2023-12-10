@@ -120,7 +120,7 @@ class App():
     
     self.renderFetchBtn()
     
-    self.FetchRefreshButton = ctk.CTkButton(self.mainFrame, text='Refresh', command=self.publish_file, fg_color='#29ADB2')
+    self.FetchRefreshButton = ctk.CTkButton(self.mainFrame, text='Refresh', command=self.get_available_files, fg_color='#29ADB2')
     self.FetchRefreshButton.place(relwidth=0.05, relheight=0.05, relx=0.95, rely=0.14, anchor=ctk.E)
 
     self.disconnect_Button = ctk.CTkButton(self.mainFrame, text='Disonnect', command=self.disconnect_server, fg_color='#CC5C70')
@@ -133,12 +133,14 @@ class App():
     self.LocalList.place(relwidth=0.4, relheight=0.7, relx=0.25, rely=0.18, anchor=ctk.N)                               
     
     self.FetchList = CTkListbox(self.mainFrame, fg_color='#FED9ED', corner_radius=8, border_width=3, border_color='#CC5C70', text_color='#860A35',
-                                   hover_color='#FFC0D9', font=self.fontM, select_color='#29ADB2')
+                                   hover_color='#FFC0D9', font=self.fontM, select_color='#29ADB2', command=self.fetch_peers)
     self.FetchList.place(relwidth=0.4, relheight=0.36, relx=0.75, rely=0.18, anchor=ctk.N)                               
 
     self.PeerList = CTkListbox(self.mainFrame, fg_color='#FED9ED', corner_radius=8, border_width=3, border_color='#CC5C70', text_color='#860A35',
                                    hover_color='#FFC0D9', font=self.fontM, select_color='#29ADB2')
     self.PeerList.place(relwidth=0.4, relheight=0.25, relx=0.75, rely=0.63, anchor=ctk.N)                               
+
+    self.get_available_files()
 
   def connect_server(self):
     serverIP = self.ServerIPEntry.get()
@@ -153,14 +155,16 @@ class App():
       self.WarningLabel.after(2000, lambda: self.WarningLabel.place_forget())
       return
 
-    self.client = Client(hostname=hostname, server_host=serverIP)
+    self.client = Client(controller=self, hostname=hostname, server_host=serverIP)
     self.client_thread = threading.Thread(target=self.client.start,daemon=True)
     self.client_thread.start()
 
     self.hide_login_screen()
     self.show_main_screen()
-    self.update_LocalList()
-    self.update_FetchList()
+    # self.client.get_all_available_files()
+    self.update_Lists()
+    # self.update_LocalList()
+    # self.update_FetchList()
 
   def disconnect_server(self):
     restart()
@@ -174,11 +178,15 @@ class App():
   def publish_file(self):
     print('publishing file')
     self.upload_file()
-    self.update_LocalList()
+    self.update_Lists()
+    # self.update_LocalList()
     # self.get_available_files()
     
   def fetch_file(self):
     print('fetching file')
+
+  def fetch_peers(self, val):
+    print('Fetching peers for ', val)
 
   def upload_file(self):
     filePath = filedialog.askopenfilename()
@@ -187,7 +195,13 @@ class App():
     self.client.store_file_into_repo(lname, fname)
     self.client.publish_file_info(('./repository', fname))
 
+  def update_Lists(self):
+    self.update_LocalList()
+    self.update_FetchList()
+    self.update_PeerList()
+
   def update_LocalList(self):
+    print('[UI] updating local list')
     if self.LocalList.size():
         self.LocalList.delete(0,'END')
     filePath = os.path.join(os.getcwd(), REPO_PATH)
@@ -198,16 +212,17 @@ class App():
     self.renderDeleteLocalBtn()
 
   def update_FetchList(self):
-    if self.LocalList.size():
-        self.LocalList.delete(0,'END')
-    filePath = os.path.join(os.getcwd(), REPO_PATH)
-    for fileName in os.listdir(filePath):
-        self.LocalList.insert('END',fileName)
+    print('[UI] updating fetch list - ', self.client.remoteFiles)
+    print('checking len:', len(self.client.remoteFiles))
+    if self.FetchList.size():
+      self.FetchList.delete(0, 'END')
+    for file in self.client.remoteFiles:
+      print('adding ', file)
+      self.FetchList.insert('END', file[0])
     
-    self.deleteLocalBtnState = 'disabled'
-    self.renderDeleteLocalBtn()
-
-  # def update_PeerList(self):
+      
+  def update_PeerList(self):
+    print('[UI] updating peer list')
 
 
   def remove_local_file(self):
@@ -249,7 +264,8 @@ class App():
     # self.terminate_flag.set()
 
     # self.client_thread.join()
-    self.client.disconnect()
+    if hasattr(self, 'client'):
+      self.client.disconnect()
     try:
         sys.exit(0)
     except SystemExit:
