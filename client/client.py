@@ -17,10 +17,11 @@ class Client():
     def __init__(
         self, 
         hostname='default',
-        server_host='192.168.254.144', 
+        server_host='192.168.1.11', 
         server_port=7734, 
 
     ):
+        print('a client obj init!')
         self.server_host = server_host
         self.server_port = server_port
         
@@ -35,6 +36,7 @@ class Client():
             Start the client
         """
 
+        print('client starting')
         if not os.path.exists(REPO_PATH):
             os.makedirs(REPO_PATH)
         
@@ -359,12 +361,12 @@ class Client():
 
     def disconnect(self):
         print('[Client] removing self')
-        message = 'REMOVE_CLIENT\n'
+        message = 'REMOVE_CLIENT\n' + str(self.upload_port)
         self.server.send(message.encode())
 
     def shutdown(self, payload = None):
         print('\nShutting Down...')
-
+        self.disconnect()
         try:
             sys.exit(0)
         except SystemExit:
