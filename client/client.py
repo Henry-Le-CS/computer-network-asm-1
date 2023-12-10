@@ -373,18 +373,46 @@ class Client():
 
         files = payload[1:]
         for file in files:
-            file_name, client_name, uploader_address = file.split(':')
-            print('- ', (file_name, client_name, uploader_address), '\n')
-            newlist.append((file_name, client_name, uploader_address))
+            # file_name, client_name, uploader_address = file.split(':')
+            # print('- ', (file_name, client_name, uploader_address), '\n')
+            # newlist.append((file_name, client_name, uploader_address))
+            print('- ', file, '\n')
+            newlist.append(file)
         
         self.remoteFiles = newlist
         self.controller.update_FetchList()
+
+    def get_peers(self, file_name):
+        message = 'GET_PEERS\n' + file_name
+        self.server.send(message.encode())
+
+    def set_peers(self, payload):
+        print('setting peers for files', payload)
+
+        newlist = []
+
+        peers = payload[2:]
+        for peer in peers:
+            hostname, host, port, path = peer.split()
+            # print('- ', (file_name, client_name, uploader_address), '\n')
+            # newlist.append((file_name, client_name, uploader_address))
+            if hostname == 'None':
+                continue
+            print('- ', peer, '\n')
+            newlist.append(peer)
+        
+        self.peerList = newlist
+        self.controller.update_PeerList()
+
+    def clear_peers(self):
+        print('Clearing peers')
+        self.peerList = []
 
     def make_download_request(self, payload):
         # This will call download_from_peer() method
         # payload should be:
         # - hostname, host, port, file_path, file_name = payload
-        print('[Download file]')
+        print('[Download file]', payload)
         self.download_from_peer(payload)
 
     def disconnect(self):
