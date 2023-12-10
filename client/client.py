@@ -76,7 +76,7 @@ class Client():
         # Start a new thread for cli
         self.cli_thread = threading.Thread(target=self.cli)
         self.cli_thread.start()
-                
+
         while True:
             try:
                 data = self.server.recv(1024).decode()

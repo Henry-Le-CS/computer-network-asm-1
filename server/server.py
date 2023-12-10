@@ -499,7 +499,7 @@ class Server:
         client_address = payload
         client_soc = self.client_socket_lists[client_address]
         
-        files = ['LIST']
+        files = ['SET_AVAILABLE_FILES']
         index = 1
         
         for file_name, file_references in self.file_references.items():
@@ -510,11 +510,11 @@ class Server:
                                                 uploader_address=uploader_address
                                             )
                 
-                # if is_client_fetching_itself:
-                #     continue
+                if is_client_fetching_itself:
+                    continue
                 
                 client_name = self.get_client_name(uploader_address)
-                files.append(f'{index}) File name: {file_name}, Host: {client_name}, IP: {uploader_address[0]}')
+                files.append(f'{file_name}:{client_name}:{uploader_address}')
                 index += 1
         
         if len(files) == 0:
