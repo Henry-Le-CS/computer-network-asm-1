@@ -2,6 +2,7 @@ import tkinter as tk
 import customtkinter as ctk
 from CTkListbox import *
 from tkinter import filedialog
+from CTkMessagebox import CTkMessagebox
 import sys
 import os
 import multiprocessing
@@ -23,7 +24,7 @@ class App():
     self.fontXL = ctk.CTkFont('Montserrat', 24, 'bold')
 
     self.deleteLocalBtnState = 'disabled'
-    self.isFetchFileSelected = False
+    # self.isFetchFileSelected = False
 
     self.init_app()
 
@@ -140,7 +141,7 @@ class App():
                                    hover_color='#FFC0D9', font=self.fontM, select_color='#29ADB2')
     self.PeerList.place(relwidth=0.4, relheight=0.25, relx=0.75, rely=0.63, anchor=ctk.N)                               
 
-    self.get_available_files()
+    # self.get_available_files()
 
   def connect_server(self):
     serverIP = self.ServerIPEntry.get()
@@ -183,10 +184,35 @@ class App():
     # self.get_available_files()
     
   def fetch_file(self):
-    print('fetching file')
+    file_name = self.FetchList.get()
+    hostname = self.PeerList.get()
+
+    if not file_name or not hostname:
+      self.pop_error_dialog("You have to select the file and the peer to fetch!")
+      return
+      
+    print('fetching file...')
+    peer = self.find_peer_by_hostname(hostname)
+
+    if not peer:
+      self.pop_error_dialog()
+      return
+
+    hostname, host, port, file_path = peer.split()
+    self.client.make_download_request((hostname, host, port, file_path, file_name))
+
+  def find_peer_by_hostname(self, hostname):
+    print('current peer list', self.client.peerList)
+    for peer in self.client.peerList:
+      if hostname == peer.split()[0]:
+        print('Hehe found peer', peer)
+        return peer
+    print('Huhu no peer')
+    return None
 
   def fetch_peers(self, val):
     print('Fetching peers for ', val)
+    self.client.get_peers(val)
 
   def upload_file(self):
     filePath = filedialog.askopenfilename()
@@ -214,16 +240,25 @@ class App():
   def update_FetchList(self):
     print('[UI] updating fetch list - ', self.client.remoteFiles)
     print('checking len:', len(self.client.remoteFiles))
-    if self.FetchList.size():
+    if self.FetchList.size() > 0:
       self.FetchList.delete(0, 'END')
+
+    if len(self.client.remoteFiles) == 0:
+      self.client.get_available_files()
+      return
+
     for file in self.client.remoteFiles:
       print('adding ', file)
-      self.FetchList.insert('END', file[0])
+      self.FetchList.insert('END', file)
     
-      
   def update_PeerList(self):
-    print('[UI] updating peer list')
-
+    print('[UI] updating peer list', self.client.peerList)
+    if self.PeerList.size():
+      self.PeerList.delete(0, 'END')
+    for peer in self.client.peerList:
+      hostname = peer.split()[0]
+      print('adding ', peer)
+      self.PeerList.insert('END', hostname)
 
   def remove_local_file(self):
     fname = self.LocalList.get()
@@ -235,8 +270,9 @@ class App():
     self.DeleteLocalFileButton = ctk.CTkButton(self.mainFrame, text='Delete Local', command=self.remove_local_file, fg_color='#D80032', state=self.deleteLocalBtnState)
     self.DeleteLocalFileButton.place(relwidth=0.15, relheight=0.06, relx=0.05, rely=0.94, anchor=ctk.W)
 
+  # Placeholder for future button logic
   def renderFetchBtn(self):
-    self.FetchButton = ctk.CTkButton(self.mainFrame, text='Choose a file to fetch', command=self.fetch_file, fg_color='#CC5C70', state='normal' if self.isFetchFileSelected else 'disabled')
+    self.FetchButton = ctk.CTkButton(self.mainFrame, text='Fetch file', command=self.fetch_file, fg_color='#CC5C70')
     self.FetchButton.place(relwidth=0.34, relheight=0.05, relx=0.55, rely=0.14, anchor=ctk.W)
 
   def toggleLocalFileSelection(self, val):
@@ -254,6 +290,10 @@ class App():
     else:
       self.isFetchFileSelected = True
     self.renderFetchBtn()
+
+  def pop_error_dialog(self, msg):
+    CTkMessagebox(title="Error", message=msg if msg else 'Something went wrong, please try again.', icon="cancel")
+    return
 
   def on_closing(self):
     print("Closing!")
