@@ -16,10 +16,10 @@ REPO_PATH = 'repository/'
 class Client():
     def __init__(
         self, 
+        controller,
         hostname='default',
         server_host='192.168.1.11', 
         server_port=7734, 
-
     ):
         print('a client obj init!')
         self.server_host = server_host
@@ -30,6 +30,11 @@ class Client():
         self.is_selecting_peer = False
         self.peer_options = {}
         self.upload_port = None
+
+        self.controller = controller
+
+        self.remoteFiles = []
+        self.peerList = []
         
     def start(self):
         """
@@ -84,6 +89,8 @@ class Client():
                         print(data + '\n' + inputStr, end = '', flush=True)
                     elif(method == 'list'):
                         print('[INFO] listing:', payload)
+                    elif(method == 'list'):
+                        print('[INFO] list:', payload)
                     # Else if the method is defined in the client, then call it
                     elif(hasattr(self, method) and callable(getattr(self, method))):
                         getattr(self, method)(payload)
@@ -358,6 +365,27 @@ class Client():
         print('[Client] sending get files req')
         message = 'GET_ALL_AVAILABLE_FILES\n'
         self.server.send(message.encode())
+
+    def set_available_files(self, payload):
+        print('setting avail files', payload)
+
+        newlist = []
+
+        files = payload[1:]
+        for file in files:
+            file_name, client_name, uploader_address = file.split(':')
+            print('- ', (file_name, client_name, uploader_address), '\n')
+            newlist.append((file_name, client_name, uploader_address))
+        
+        self.remoteFiles = newlist
+        self.controller.update_FetchList()
+
+    def make_download_request(self, payload):
+        # This will call download_from_peer() method
+        # payload should be:
+        # - hostname, host, port, file_path, file_name = payload
+        print('[Download file]')
+        self.download_from_peer(payload)
 
     def disconnect(self):
         print('[Client] removing self')
