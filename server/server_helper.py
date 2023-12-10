@@ -102,7 +102,6 @@ def parse_client_request (request: str, address):
         
         payload = (file_name, file_path, address)
         method = 'remove_local_file'
-        
     
     elif request_method == 'FETCH_FILE_INFO':
         validate_length(request, 2, delimiter=delimiter) # keyword, file_name
@@ -127,6 +126,14 @@ def parse_client_request (request: str, address):
     elif request_method == 'GET_ALL_AVAILABLE_FILES':
         payload = address
         method = 'get_all_available_files'
+
+    elif request_method == 'GET_PEERS':
+        validate_length(request, 2, delimiter=delimiter) # keyword, file_name
+        
+        file_name = splitted_command[1]
+        
+        payload = (file_name, address)
+        method = 'get_peers'
 
     elif request_method == 'REMOVE_CLIENT':
         upload_port = splitted_command[1]

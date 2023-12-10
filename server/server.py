@@ -330,6 +330,37 @@ class Server:
         
         client.sendall(message.encode())
 
+    def get_peers(self, payload):
+        # This methods used mostly for UI
+        file_name, address = payload
+
+        print('[Server] Sending peers for ...')
+
+        client = self.client_socket_lists[address]
+        
+        if(not self.file_references.keys().__contains__(file_name)):
+            client.sendall(f'No peer has file {file_name}.'.encode())
+            return
+        
+        res = ['SET_PEERS'] # keyword
+        res.append(file_name)
+        
+        for uploader_address, file_path in self.file_references[file_name]:
+            is_client_fetching_itself = self.isCurrentClient(
+                                            address=address, 
+                                            uploader_address=uploader_address
+                                        )
+            
+            if is_client_fetching_itself:
+                continue
+            
+            client_name = self.get_client_name(uploader_address)
+            res.append(f'{client_name} {uploader_address[0]} {uploader_address[1]} {file_path}')       
+        
+        message = '\n'.join(res)
+        
+        client.sendall(message.encode())
+
     def isCurrentClient(self, address, uploader_address):        
         """
             Check if the current client is fetching or executing the command itself
@@ -503,18 +534,17 @@ class Server:
         index = 1
         
         for file_name, file_references in self.file_references.items():
+            print('loop through', file_name, file_references)
+            is_fetching_itself_flag = False
             for uploader_address, file_path in file_references:
                 
-                is_client_fetching_itself = self.isCurrentClient(
-                                                address=client_address, 
-                                                uploader_address=uploader_address
-                                            )
-                
-                if is_client_fetching_itself:
-                    continue
-                
+                if self.isCurrentClient(address=client_address, uploader_address=uploader_address):
+                    is_fetching_itself_flag = True
+                    break
+            
+            if not is_fetching_itself_flag:
                 client_name = self.get_client_name(uploader_address)
-                files.append(f'{file_name}:{client_name}:{uploader_address}')
+                files.append(f'{file_name}')
                 index += 1
         
         if len(files) == 0:
