@@ -240,6 +240,11 @@ class Client():
             
             res_header = peer_socket.recv(1024).decode("utf-8")
             
+            if res_header.splitlines()[0] == 'NOT_FOUND':
+                # Server's message
+                print(res_header.splitlines()[1])
+                return
+            
             if res_header:
                 print(res_header)
                 
@@ -305,7 +310,7 @@ class Client():
             file_exists = self.check_file_exist(file_path, file_name)
             
             if not file_exists:
-                conn.send(f'File {file_name} does not exist at {file_path}'.encode())
+                conn.send(f'NOT_FOUND\nFile {file_name} does not exist at {file_path}'.encode())
                 return
             
             path = file_path + '/' + file_name
