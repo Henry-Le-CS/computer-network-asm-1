@@ -196,7 +196,7 @@ class App():
     peer = self.find_peer_by_hostname(hostname)
 
     if not peer:
-      self.pop_error_dialog()
+      self.pop_error_dialog('No peer')
       return
 
     hostname, host, port, file_path = peer.split()
