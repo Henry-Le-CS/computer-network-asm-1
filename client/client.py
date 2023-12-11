@@ -302,7 +302,11 @@ class Client():
             if not data:
                 return
             
-            method, file_path, file_name = data.split()
+            # method, file_path, file_name = data.split()
+            splitted_data = data.split()
+            method = splitted_data[0]
+            file_path = splitted_data[1]
+            file_name = ' '.join(splitted_data[2:])
             
             if method != 'DOWNLOAD_FILE':
                 return
@@ -424,6 +428,7 @@ class Client():
         print('[Client] removing self')
         message = 'REMOVE_CLIENT\n' + str(self.upload_port)
         self.server.send(message.encode())
+        self.server.close()
 
     def shutdown(self, payload = None):
         print('\nShutting Down...')
