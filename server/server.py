@@ -222,6 +222,12 @@ class Server:
         self.lock.acquire()
         
         file_name, file_path, uploader_address = payload
+        
+        if not file_name:
+            print('[Server] Nothing to publish.\n')
+            self.lock.release()
+            return
+        
         print('[Server] publishing', file_name, file_path)
         
         # Work around: file_path will be destructured from self.file_references[file_name]. So we need a cloned variable
@@ -233,6 +239,7 @@ class Server:
         for client_address, file_path in self.file_references[file_name]:
             if path == file_path and client_address == uploader_address:
                 print(f'File {file_name} at {path} directory has already been recorded.\n')
+                self.lock.release()
                 return
         
         self.file_references[file_name].append((uploader_address, path))
@@ -527,7 +534,7 @@ class Server:
         client_soc.sendall(message.encode())
 
     def get_all_available_files(self, payload):
-        print('listing files')
+        # print('listing files')
         client_address = payload
         client_soc = self.client_socket_lists[client_address]
         
@@ -535,7 +542,7 @@ class Server:
         index = 1
         
         for file_name, file_references in self.file_references.items():
-            print('loop through', file_name, file_references)
+            # print('loop through', file_name, file_references)
             is_fetching_itself_flag = False
             for uploader_address, file_path in file_references:
                 
@@ -557,6 +564,6 @@ class Server:
 
         
 if __name__ == '__main__':
-    server = Server(server_host='192.168.1.11')
+    server = Server(server_host='10.128.154.210')
 
     server.start()
