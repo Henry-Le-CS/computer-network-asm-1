@@ -391,10 +391,13 @@ class Server:
     def remove_client(self, address):        
         self.lock.acquire()
         
+
         self.remove_file_reference(address)
         self.remove_client_name(address)
         self.remove_client_socket(address)
         
+        print(f"Client {address} disconnected.\n> ", end='')
+        print('> ')     
         self.lock.release()
     
     def remove_client_socket(self, address):
@@ -573,6 +576,6 @@ class Server:
 
         
 if __name__ == '__main__':
-    server = Server(server_host='10.128.147.14')
+    server = Server(server_host='192.168.255.80')
 
     server.start()

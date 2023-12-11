@@ -140,7 +140,7 @@ def parse_client_request (request: str, address):
 
         payload = address
         # payload = address
-        print('[Parser] payload', payload)
+        # print('[Parser] payload', payload)
         method = 'remove_client'
 
     else:
