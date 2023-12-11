@@ -127,6 +127,7 @@ class Server:
             except ConnectionError:
                 print(f"Client {address} disconnected.\n> ", end='')
                 print('> ')
+                self.remove_client(address)
                 break
             except Exception:
                 tests = 3
@@ -536,6 +537,10 @@ class Server:
         for file_name, file_references in self.file_references.items():
             print('loop through', file_name, file_references)
             is_fetching_itself_flag = False
+
+            if len(self.file_references[file_name]) == 0:
+                continue
+            
             for uploader_address, file_path in file_references:
                 
                 if self.isCurrentClient(address=client_address, uploader_address=uploader_address):
@@ -556,6 +561,6 @@ class Server:
 
         
 if __name__ == '__main__':
-    server = Server(server_host='192.168.1.11')
+    server = Server(server_host='10.128.147.14')
 
     server.start()
