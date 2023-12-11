@@ -424,6 +424,7 @@ class Client():
         print('[Client] removing self')
         message = 'REMOVE_CLIENT\n' + str(self.upload_port)
         self.server.send(message.encode())
+        self.server.close()
 
     def shutdown(self, payload = None):
         print('\nShutting Down...')

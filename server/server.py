@@ -222,6 +222,12 @@ class Server:
         self.lock.acquire()
         
         file_name, file_path, uploader_address = payload
+        
+        if not file_name:
+            print('[Server] Nothing to publish.\n')
+            self.lock.release()
+            return
+        
         print('[Server] publishing', file_name, file_path)
         
         # Work around: file_path will be destructured from self.file_references[file_name]. So we need a cloned variable
@@ -233,6 +239,7 @@ class Server:
         for client_address, file_path in self.file_references[file_name]:
             if path == file_path and client_address == uploader_address:
                 print(f'File {file_name} at {path} directory has already been recorded.\n')
+                self.lock.release()
                 return
         
         self.file_references[file_name].append((uploader_address, path))
@@ -398,6 +405,8 @@ class Server:
         
         for client_address, client_socket in self.client_socket_lists.items():
             if client_address == address:
+                disconnect_client_socket = self.client_socket_lists[address]
+                disconnect_client_socket.close()
                 continue
             
             new_client_socket_lists[client_address] = client_socket
@@ -527,15 +536,18 @@ class Server:
         client_soc.sendall(message.encode())
 
     def get_all_available_files(self, payload):
-        print('listing files')
+        # print('listing files')
         client_address = payload
         client_soc = self.client_socket_lists[client_address]
         
         files = ['SET_AVAILABLE_FILES']
         index = 1
         
+        
         for file_name, file_references in self.file_references.items():
-            print('loop through', file_name, file_references)
+            if len(self.file_references[file_name]) == 0:
+                continue
+            # print('loop through', file_name, file_references)
             is_fetching_itself_flag = False
 
             if len(self.file_references[file_name]) == 0:
