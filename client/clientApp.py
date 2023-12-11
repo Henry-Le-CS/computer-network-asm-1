@@ -221,6 +221,7 @@ class App():
     print('Got file path:', lname, '-', fname)
     self.client.store_file_into_repo(lname, fname)
     self.client.publish_file_info(('./repository', fname))
+    self.pop_success_dialog('File is successfully published!')
 
   def update_Lists(self):
     self.update_LocalList()
@@ -266,6 +267,7 @@ class App():
     print('removing local file', fname)
     self.client.remove_local_file(('./repository', fname))
     self.LocalList.delete(self.LocalList.curselection())
+    self.pop_success_dialog('File is successfully removed!')
 
   def renderDeleteLocalBtn(self):
     self.DeleteLocalFileButton = ctk.CTkButton(self.mainFrame, text='Delete Local', command=self.remove_local_file, fg_color='#D80032', state=self.deleteLocalBtnState)
@@ -294,6 +296,10 @@ class App():
 
   def pop_error_dialog(self, msg):
     CTkMessagebox(title="Error", message=msg if msg else 'Something went wrong, please try again.', icon="cancel")
+    return
+    
+  def pop_success_dialog(self, msg):
+    CTkMessagebox(title="Success", message=msg if msg else 'Success', icon="check")
     return
 
   def on_closing(self):

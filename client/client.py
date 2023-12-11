@@ -263,6 +263,7 @@ class Client():
             
             download_time = end_time - start_time
             print(f'\rDownloaded file {file_name} from {hostname} in {download_time}s.', flush=True)
+            self.controller.pop_success_dialog('File is successfully fetched')
             
             peer_socket.close()
         except Exception as e:
