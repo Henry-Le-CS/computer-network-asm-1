@@ -405,6 +405,8 @@ class Server:
         
         for client_address, client_socket in self.client_socket_lists.items():
             if client_address == address:
+                disconnect_client_socket = self.client_socket_lists[address]
+                disconnect_client_socket.close()
                 continue
             
             new_client_socket_lists[client_address] = client_socket
@@ -541,7 +543,10 @@ class Server:
         files = ['SET_AVAILABLE_FILES']
         index = 1
         
+        
         for file_name, file_references in self.file_references.items():
+            if len(self.file_references[file_name]) == 0:
+                continue
             # print('loop through', file_name, file_references)
             is_fetching_itself_flag = False
             for uploader_address, file_path in file_references:
