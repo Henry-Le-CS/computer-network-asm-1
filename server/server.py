@@ -125,7 +125,6 @@ class Server:
                     getattr(self, method)(payload)
 
             except ConnectionError:
-                self.remove_client(address)
                 print(f"Client {address} disconnected.\n> ", end='')
                 print('> ')
                 self.remove_client(address)
